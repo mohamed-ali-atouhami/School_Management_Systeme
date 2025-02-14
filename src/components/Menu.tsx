@@ -117,18 +117,21 @@ const menuItems = [
 ];
 export default function Menu() {
     return (
-        <div className="mt-2 text-sm">
+        <div className="mt-2 text-sm overflow-y-auto">
             {menuItems.map((item) => (
                 <div className="flex flex-col gap-2" key={item.title}>
-                    <span className="hidden lg:block font-light text-gray-400 my-4">{item.title}</span>
-                    {item.items.map((i) => (
-                        <Link href={i.href} key={i.label} className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2">
+                  <span className="hidden lg:block font-light text-gray-400 my-2">{item.title}</span>
+                  {item.items.map((i) => (
+                      <Link 
+                          href={i.href} 
+                          key={i.label} 
+                          className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 hover:bg-gray-100 rounded-lg px-2"
+                      >
                           <Image src={i.icon} alt={i.label} width={20} height={20} />
                           <span className="hidden lg:block">{i.label}</span>
-                        </Link>
-                    ))}
+                      </Link>
+                  ))}
                 </div>
-
             ))}
         </div>
     );

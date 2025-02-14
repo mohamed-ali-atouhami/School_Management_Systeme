@@ -9,25 +9,20 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="h-screen flex">
+    <div className="h-screen flex overflow-hidden">
       {/* Sidebar */}
-      <div className="w-[15%] md:w-[8%] lg:w-[16%] xl:w-[15%] p-4">
+      <div className="h-screen flex-shrink-0 w-[15%] md:w-[8%] lg:w-[16%] xl:w-[15%] p-4 overflow-y-auto">
         <Link href="/" className="flex items-center justify-center lg:justify-start gap-2">
-            <Image src="/LogoSchool.png" alt="logo" width={32} height={32} />
+          <Image src="/LogoSchool.png" alt="logo" width={32} height={32} />
           <span className="hidden lg:block">SchoolMed</span>
         </Link>
         <Menu />
       </div>
       {/*Right Side*/}
-      <div className="w-[85%] md:w-[92%] lg:w-[84%] xl:w-[85%] bg-[#F7F8FA] overflow-auto">
+      <div className="flex-1 h-screen overflow-y-auto bg-[#F7F8FA]">
         <Navbar />
         {children}
       </div>
-
-
-
     </div>
-
-
   );
 }
