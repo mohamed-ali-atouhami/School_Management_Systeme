@@ -19,8 +19,6 @@ const Navbar = () => {
                         <span className="text-xs text-white">1</span>
                     </div>
                 </div>
-
-
                 <div className="flex flex-col">
                     <span className="text-sm leading-3 font-medium">John Doe</span>
 
@@ -29,15 +27,7 @@ const Navbar = () => {
                 </div>
                 <Image src="/avatar.png" alt="avatar" width={36} height={36} className="rounded-full" />
             </div>
-
-
-
         </div>
-
-
-
-
-
     )
 }
 

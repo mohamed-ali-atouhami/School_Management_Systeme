@@ -63,6 +63,18 @@
   body {
     @apply bg-background text-foreground;
   }
-}
 
+}
+.react-calendar {
+  width: 100% !important;
+  font-family: 'Inter', sans-serif !important;
+  border: none !important;
+}
+.react-calendar__navigation__label__labelText{
+  font-weight: 600 !important;
+}
+.react-calendar__tile--active{
+  background: #C3EBFA !important;
+  color: black !important;
+}
 
