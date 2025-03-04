@@ -19,7 +19,7 @@ export default function DashboardLayout({
         <Menu />
       </div>
       {/*Right Side*/}
-      <div className="flex-1 h-screen overflow-y-auto bg-[#F7F8FA]">
+      <div className="flex-1 flex flex-col h-screen overflow-y-auto bg-[#F7F8FA]">
         <Navbar />
         {children}
       </div>
