@@ -4,6 +4,7 @@ import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import Link from "next/link";
 import { role, teachersData } from "@/lib/data";
+import FormModal from "@/components/FormModal";
 
 type Teachers = {
     id: number;
@@ -81,9 +82,9 @@ export default function TeachersListPage() {
                                 <Image src="/view.png" alt="" width={16} height={16} />
                             </button>
                         </Link>
-                        {role === "admin" && <button className="w-7 h-7 rounded-full bg-medaliPurple flex items-center justify-center">
-                            <Image src="/delete.png" alt="" width={16} height={16} />
-                        </button>}
+                        {role === "admin" && 
+                        <FormModal table="teachers" type="delete" id={teacher.id} />
+                        }
                     </div>
                 </td>
             </tr>
@@ -103,9 +104,9 @@ export default function TeachersListPage() {
                         <button className="w-8 h-8 rounded-full bg-medaliYellow flex items-center justify-center">
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
-                        {role === "admin" && <button className="w-8 h-8 rounded-full bg-medaliYellow flex items-center justify-center">
-                            <Image src="/plus.png" alt="" width={14} height={14} />
-                        </button>}
+                        {role === "admin" && 
+                        <FormModal table="teachers" type="create" />
+                        }
                     </div>
                 </div>
             </div>

@@ -18,6 +18,8 @@ export default {
   			medaliYellowLight: '#FEFCE8',
   			medaliPurple: '#CFCEFF',
   			medaliPurpleLight: '#F1F0FF',
+  			medaliPink: '#FFC3C3',
+  			medaliPinkLight: '#FFE8E8',
   			card: {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
