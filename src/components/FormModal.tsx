@@ -1,5 +1,5 @@
 "use client"
-import { Dialog, DialogHeader, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogHeader, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -11,9 +11,36 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
 import Image from "next/image"
-import { useState } from "react"
+import React, { useState } from "react"
+import dynamic from "next/dynamic"
+import { Loader } from "lucide-react"
+
+const TeacherForm = dynamic(() => import("./Forms/TeacherForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
+const StudentForm = dynamic(() => import("./Forms/StudentForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
+const AnnouncementForm = dynamic(() => import("./Forms/AnnouncementForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
+const ParentForm = dynamic(() => import("./Forms/ParentForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
+const ClassForm = dynamic(() => import("./Forms/ClassForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
+const ExamForm = dynamic(() => import("./Forms/ExamForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
+const AssignmentForm = dynamic(() => import("./Forms/AssignmentForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
+const ResultForm = dynamic(() => import("./Forms/ResultForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
+const EventForm = dynamic(() => import("./Forms/EventForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
+const LessonForm = dynamic(() => import("./Forms/LessonForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
+const SubjectForm = dynamic(() => import("./Forms/SubjectForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
+
+const formMap: Record<string, React.ComponentType<{ type: "create" | "edit", data?: any }>> = {
+    teachers: TeacherForm,
+    students: StudentForm,
+    parents: ParentForm,
+    classes: ClassForm,
+    exams: ExamForm,
+    announcements: AnnouncementForm,
+    assignments: AssignmentForm,
+    results: ResultForm,
+    events: EventForm,
+    lessons: LessonForm,
+    subjects: SubjectForm,
+}
 
 export default function FormModal({ table, type, data, id }:
     {
@@ -47,7 +74,7 @@ export default function FormModal({ table, type, data, id }:
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        ) : (
+        ) : type === "create" || type === "edit" ? (
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -55,12 +82,10 @@ export default function FormModal({ table, type, data, id }:
                             {type === "create" ? "Create" : "Edit"} {table}
                         </DialogTitle>
                     </DialogHeader>
-                    <DialogDescription>
-                        {type === "create" ? "Create a new" : "Edit"} {table}
-                    </DialogDescription>
+                    {React.createElement(formMap[table], { type, data })}
                 </DialogContent>
             </Dialog>
-        )
+        ) : null
     }
     return (
         <>

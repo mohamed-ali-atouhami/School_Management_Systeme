@@ -3,8 +3,23 @@ import BigCalendar from "@/components/BigCalendar";
 import Image from "next/image";
 import Link from "next/link";
 import { PerformanceChart } from "@/components/PerformanceChart";
-
+import FormModal from "@/components/FormModal";
 export default function TeacherSinglePage() {
+    const data = {
+        id: 1,
+        username: "kok",
+        firstName: "John",
+        lastName: "Doe",
+        email: "john@doe.com",
+        password: "1234567890",
+        image:
+            "https://images.pexels.com/photos/2888150/pexels-photo-2888150.jpeg?auto=compress&cs=tinysrgb&w=1200",
+        phone: "1234567890",
+        address: "123 Main St, Anytown, USA",
+        birthDate: "2025-01-01",
+        sex: "female",
+        bloodType: "A+",
+    }
     return (
         <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row ">
             {/* left */}
@@ -24,7 +39,10 @@ export default function TeacherSinglePage() {
                             />
                         </div>
                         <div className="w-2/3 flex flex-col justify-between gap-4">
-                            <h1 className="text-xl font-semibold">John Doe</h1>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-xl font-semibold">John Doe</h1>
+                                <FormModal table="teachers" type="edit" data={data} />
+                            </div>
                             <p className="text-sm text-gray-500">
                                 Lorem ipsum dolor sit amet consectetur adipisicing elit
                             </p>
