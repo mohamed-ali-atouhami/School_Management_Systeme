@@ -121,11 +121,11 @@ export default function TeacherSinglePage() {
                 <div className="bg-white rounded-md p-4">
                     <h1 className="text-xl font-semibold">Shortcuts</h1>
                     <div className="mt-4 flex gap-4 flex-wrap text-xs text-gray-500">
-                        <Link className="p-3 rounded-md bg-medaliSkyLight" href="/">Teacher&apos;s Classes</Link>
-                        <Link className="p-3 rounded-md bg-medaliPurpleLight" href="/">Teacher&apos;s Students</Link>
-                        <Link className="p-3 rounded-md bg-medaliYellowLight" href="/">Teacher&apos;s Exams</Link>
-                        <Link className="p-3 rounded-md bg-pink-50" href="/">Teacher&apos;s Lessons</Link>
-                        <Link className="p-3 rounded-md bg-medaliSkyLight" href="/">Teacher&apos;s Assignments</Link>
+                        <Link className="p-3 rounded-md bg-medaliSkyLight" href={`/list/classes?supervisorId=${"teacher12"}`}>Teacher&apos;s Classes</Link>
+                        <Link className="p-3 rounded-md bg-medaliPurpleLight" href={`/list/students?teacherId=${"teacher2"}`}>Teacher&apos;s Students</Link>
+                        <Link className="p-3 rounded-md bg-medaliYellowLight" href={`/list/exams?teacherId=${"teacher12"}`}>Teacher&apos;s Exams</Link>
+                        <Link className="p-3 rounded-md bg-pink-50" href={`/list/lessons?teacherId=${"teacher2"}`}>Teacher&apos;s Lessons</Link>
+                        <Link className="p-3 rounded-md bg-medaliSkyLight" href={`/list/assignments?teacherId=${"teacher2"}`}>Teacher&apos;s Assignments</Link>
                     </div>
                 </div>
                 <PerformanceChart/>

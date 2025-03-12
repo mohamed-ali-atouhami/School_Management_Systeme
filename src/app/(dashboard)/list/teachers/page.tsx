@@ -79,8 +79,8 @@ const renderRow = (teacher: Teachers) => {
                             <Image src="/view.png" alt="" width={16} height={16} />
                         </button>
                     </Link>
-                    {role === "admin" && 
-                    <FormModal table="teachers" type="delete" id={parseInt(teacher.id)} />
+                    {role === "admin" &&
+                        <FormModal table="teachers" type="delete" id={teacher.id} />
                     }
                 </div>
             </td>
@@ -88,30 +88,40 @@ const renderRow = (teacher: Teachers) => {
     )
 }
 
-export default async function TeachersListPage({searchParams}: {searchParams:{[key:string]: string | undefined}}) {
-    const {page , ...queryparams} =  searchParams;
-    const pageNumber = page? Number(page) : 1;
+export default async function TeachersListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+    const { page, ...queryparams } = searchParams;
+    const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
     const query: Prisma.TeacherWhereInput = {};
-    if(queryparams){
-        for(const [key,value] of Object.entries(queryparams)){
-            switch(key){
+    if (queryparams) {
+        for (const [key, value] of Object.entries(queryparams)) {
+            switch (key) {
                 case "classId":
                     query.lessons = {
-                        some: {classId: Number(value)}
+                        some: { classId: Number(value) }
                     }
+                    break;
+                case "search":
+                    query.OR = [
+                        { name: { contains: value, mode: "insensitive" } },
+                        { email: { contains: value, mode: "insensitive" } },
+                        { username: { contains: value, mode: "insensitive" } },
+                    ]
+                    break;
+                default:
+                    break;
             }
         }
     }
-    const [teachersData , count] = await prisma.$transaction([
+    const [teachersData, count] = await prisma.$transaction([
         prisma.teacher.findMany({
             where: query,
             include: {
                 subjects: true,
                 classes: true,
-        },
-        take: ITEMS_PER_PAGE,
-        skip: (pageNumber - 1) * ITEMS_PER_PAGE,
+            },
+            take: ITEMS_PER_PAGE,
+            skip: (pageNumber - 1) * ITEMS_PER_PAGE,
         }),
         prisma.teacher.count({
             where: query,
@@ -131,8 +141,8 @@ export default async function TeachersListPage({searchParams}: {searchParams:{[k
                         <button className="w-8 h-8 rounded-full bg-medaliYellow flex items-center justify-center">
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
-                        {role === "admin" && 
-                        <FormModal table="teachers" type="create" />
+                        {role === "admin" &&
+                            <FormModal table="teachers" type="create" />
                         }
                     </div>
                 </div>
@@ -141,7 +151,7 @@ export default async function TeachersListPage({searchParams}: {searchParams:{[k
             <Table columns={Columns} renderRow={renderRow} data={teachersData} />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />
-        </div>  
+        </div>
     )
 }
 

@@ -47,7 +47,7 @@ export default function FormModal({ table, type, data, id }:
         table: "students" | "teachers" | "parents" | "classes" | "exams" | "assignments" | "results" | "events" | "announcements" | "attendance" | "lessons" | "subjects",
         type: "create" | "edit" | "delete",
         data?: any,
-        id?: number
+        id?: number | string
     }
 ) {
     const size = type === "create" ? "w-8 h-8" : "w-7 h-7"

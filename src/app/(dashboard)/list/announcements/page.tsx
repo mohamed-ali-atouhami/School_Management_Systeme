@@ -2,15 +2,14 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import Link from "next/link";
-import { role, announcementsData } from "@/lib/data";
+import { role } from "@/lib/data";
 import FormModal from "@/components/FormModal";
+import { Class, Announcement, Prisma } from "@prisma/client";
+import prisma from "@/lib/prisma";
+import { ITEMS_PER_PAGE } from "@/lib/settings";    
 
-type Announcements = {
-    id: number;
-    title: string;
-    class: string;
-    date: string;
+type Announcements = Announcement & {
+    class: Class;
 }
 const Columns = [
     {
@@ -33,28 +32,59 @@ const Columns = [
 
 
 ]
-export default function ResultsListPage() {
-    const renderRow = (announcement: Announcements) => {
-        return (
-            <tr key={announcement.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
-                <td className="flex items-center gap-4 p-4">
-                    {announcement.title}
-                </td>
-                <td >{announcement.class}</td>
-                <td className="hidden lg:table-cell">{announcement.date}</td>
-                <td>
-                    <div className="flex items-center gap-2">
-                        {role === "admin" && 
-                        <>
-                            <FormModal table="announcements" type="edit" data={announcement} />
-                            <FormModal table="announcements" type="delete" id={announcement.id} />
-                        </>
-                        }
-                    </div>
-                </td>
-            </tr>
-        )
+const renderRow = (announcement: Announcements) => {
+    return (
+        <tr key={announcement.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
+            <td className="flex items-center gap-4 p-4">
+                {announcement.title}
+            </td>
+            <td >{announcement.class.name}</td>
+            <td className="hidden lg:table-cell">{new Date(announcement.date).toLocaleString("GMT",{day: "2-digit", month: "2-digit", year: "numeric"})}</td>
+            <td>
+                <div className="flex items-center gap-2">
+                    {role === "admin" && 
+                    <>
+                        <FormModal table="announcements" type="edit" data={announcement} />
+                        <FormModal table="announcements" type="delete" id={announcement.id} />
+                    </>
+                    }
+                </div>
+            </td>
+        </tr>
+    )
+}
+export default async function AnnouncementsListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+    const { page, ...queryparams } = searchParams;
+    const pageNumber = page ? Number(page) : 1;
+    // URL PARAMS CONDITIONS
+    const query: Prisma.AnnouncementWhereInput = {};
+    if (queryparams) {
+        for (const [key, value] of Object.entries(queryparams)) {
+            switch (key) {
+                case "search":
+                    query.title = {
+                        contains: value,
+                        mode: "insensitive"
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
     }
+    const [announcementsData, count] = await prisma.$transaction([
+        prisma.announcement.findMany({
+            where: query,
+            include: {
+                class: {select: {name: true}},
+            },
+            take: ITEMS_PER_PAGE,
+            skip: (pageNumber - 1) * ITEMS_PER_PAGE,
+        }),
+        prisma.announcement.count({
+            where: query,
+        }),
+    ]);
     return (
         <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
             {/* top */}
@@ -80,7 +110,7 @@ export default function ResultsListPage() {
             {/* list */}
             <Table columns={Columns} renderRow={renderRow} data={announcementsData} />
             {/* pagination */}
-            <Pagination />
+            <Pagination page={pageNumber} totalCount={count} />
         </div>
     )
 }

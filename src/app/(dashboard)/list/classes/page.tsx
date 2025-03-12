@@ -2,16 +2,15 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import Link from "next/link";
-import { role, classesData } from "@/lib/data";
+import { role } from "@/lib/data";
 import FormModal from "@/components/FormModal";
+import prisma from "@/lib/prisma";
+import { ITEMS_PER_PAGE } from "@/lib/settings";
+import { Class, Grade, Prisma, Teacher } from "@prisma/client";
 
-type Classes = {
-    id: number;
-    name: string;
-    capacity: number;
-    grade: number;
-    supervisor: string;
+type Classes = Class & {
+    supervisor: Teacher;
+    grade: Grade;
 }
 const Columns = [
     {
@@ -39,29 +38,63 @@ const Columns = [
     },
 
 ]
-export default function ClassesListPage() {
-    const renderRow = (classes: Classes) => {
-        return (
-            <tr key={classes.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
-                <td className="flex items-center gap-4 p-4">
-                    {classes.name}
-                </td>
-                <td className="hidden md:table-cell">{classes.capacity}</td>
-                <td className="hidden md:table-cell">{classes.grade}</td>
-                <td className="hidden md:table-cell">{classes.supervisor}</td>
-                <td>
-                    <div className="flex items-center gap-2">
-                        {role === "admin" && 
+const renderRow = (classes: Classes) => {
+    return (
+        <tr key={classes.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
+            <td className="flex items-center gap-4 p-4">
+                {classes.name}
+            </td>
+            <td className="hidden md:table-cell">{classes.capacity}</td>
+            <td className="hidden md:table-cell">{classes.grade.level}</td>
+            <td className="hidden md:table-cell">{classes.supervisor.name}</td>
+            <td>
+                <div className="flex items-center gap-2">
+                    {role === "admin" &&
                         <>
                             <FormModal table="classes" type="edit" data={classes} />
                             <FormModal table="classes" type="delete" id={classes.id} />
                         </>
-                        }
-                    </div>
-                </td>
-            </tr>
-        )
+                    }
+                </div>
+            </td>
+        </tr>
+    )
+}
+
+export default async function ClassesListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+
+    const { page, ...queryparams } = searchParams;
+    const pageNumber = page ? Number(page) : 1;
+    // URL PARAMS CONDITIONS
+    const query: Prisma.ClassWhereInput = {};
+    if (queryparams) {
+        for (const [key, value] of Object.entries(queryparams)) {
+            switch (key) {
+                case "supervisorId":
+                    query.supervisorId = value;
+                    break;
+                case "search":
+                    query.name = { contains: value, mode: "insensitive" }
+                    break;
+                default:
+                    break;
+            }
+        }
     }
+    const [classesData, count] = await prisma.$transaction([
+        prisma.class.findMany({
+            where: query,
+            include: {
+                supervisor: true,
+                grade: true,
+            },
+            take: ITEMS_PER_PAGE,
+            skip: (pageNumber - 1) * ITEMS_PER_PAGE,
+        }),
+        prisma.class.count({
+            where: query,
+        }),
+    ]);
     return (
         <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
             {/* top */}
@@ -77,9 +110,9 @@ export default function ClassesListPage() {
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
                         {role === "admin" &&
-                        <>
-                            <FormModal table="classes" type="create" />
-                        </>
+                            <>
+                                <FormModal table="classes" type="create" />
+                            </>
                         }
                     </div>
                 </div>
@@ -87,7 +120,7 @@ export default function ClassesListPage() {
             {/* list */}
             <Table columns={Columns} renderRow={renderRow} data={classesData} />
             {/* pagination */}
-            <Pagination />
+            <Pagination page={pageNumber} totalCount={count} />
         </div>
     )
 }

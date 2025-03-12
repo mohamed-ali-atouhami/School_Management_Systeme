@@ -103,11 +103,11 @@ export default function StudentSinglePage() {
                 <div className="bg-white rounded-md p-4">
                     <h1 className="text-xl font-semibold">Shortcuts</h1>
                     <div className="mt-4 flex gap-2 flex-wrap text-xs text-gray-500">
-                        <Link className="p-3 rounded-md bg-medaliSkyLight" href="/">Student&apos;s Lessons</Link>
+                        <Link className="p-3 rounded-md bg-medaliSkyLight" href={`/list/lessons?classId=${2}`}>Student&apos;s Lessons</Link>
                         <Link className="p-3 rounded-md bg-medaliPurpleLight" href={`/list/teachers?classId=${2}`}>Student&apos;s Teachers</Link>
-                        <Link className="p-3 rounded-md bg-medaliYellowLight" href="/">Student&apos;s Exams</Link>
-                        <Link className="p-3 rounded-md bg-medaliSkyLight" href="/">Student&apos;s Assignments</Link>
-                        <Link className="p-3 rounded-md bg-pink-50" href="/">Student&apos;s Results</Link>
+                        <Link className="p-3 rounded-md bg-medaliYellowLight" href={`/list/exams?classId=${2}`}>Student&apos;s Exams</Link>
+                        <Link className="p-3 rounded-md bg-medaliSkyLight" href={`/list/assignments?classId=${2}`}>Student&apos;s Assignments</Link>
+                        <Link className="p-3 rounded-md bg-pink-50" href={`/list/results?studentId=${"student1"}`}>Student&apos;s Results</Link>
                     </div>
                 </div>
                 <PerformanceChart/>
