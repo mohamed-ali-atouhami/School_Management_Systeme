@@ -1,4 +1,4 @@
-import { role } from "@/lib/data";
+import { currentUser } from "@clerk/nextjs/server";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -6,12 +6,6 @@ const menuItems = [
     {
       title: "MENU",
       items: [
-        {
-          icon: "/home.png",
-          label: "Home",
-          href: "/",
-          visible: ["admin", "teacher", "student", "parent"],
-        },
         {
           icon: "/teacher.png",
           label: "Teachers",
@@ -116,7 +110,9 @@ const menuItems = [
       ],
     },
 ];
-export default function Menu() {
+export default async function Menu() {
+  const user = await currentUser()
+  const role = user?.publicMetadata.role as string;
     return (
         <div className="mt-2 text-sm overflow-y-auto">
             {menuItems.map((item) => (

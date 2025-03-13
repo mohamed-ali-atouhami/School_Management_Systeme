@@ -2,12 +2,11 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import { role } from "@/lib/data";
 import FormModal from "@/components/FormModal";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Lesson, Exam, Prisma, Subject, Class, Teacher } from "@prisma/client";
-
+import { auth } from "@clerk/nextjs/server";
 type Exams = Exam & {
     lesson: Lesson & {
         subject: Subject;
@@ -15,7 +14,7 @@ type Exams = Exam & {
         teacher: Teacher;
     };
 }
-const Columns = [
+const getColumns = (role?: string) => [
     {
         header: "Subject",
         accessor: "subject",
@@ -34,13 +33,13 @@ const Columns = [
         accessor: "date",
         className: "hidden md:table-cell",
     },
-    {
+    ...(role === "admin" || role === "teacher" ? [{
         header: "Actions",
         accessor: "actions",
-    },
+    }] : []),
 
 ]
-const renderRow = (exam: Exams) => {
+const renderRow = (role?: string) => (exam: Exams) => {
     return (
         <tr key={exam.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
             <td className="flex items-center gap-4 p-4">
@@ -54,7 +53,7 @@ const renderRow = (exam: Exams) => {
             </td>
             <td>
                 <div className="flex items-center gap-2">
-                    {role === "admin" && 
+                    {role === "admin" || role === "teacher" && 
                     <>
                         <FormModal table="exams" type="edit" data={exam} />
                         <FormModal table="exams" type="delete" id={exam.id} />
@@ -67,32 +66,58 @@ const renderRow = (exam: Exams) => {
 }
 
 export default async function ExamsListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+    const { sessionClaims ,userId} = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+    const currentUserId = userId!;
     const { page, ...queryparams } = searchParams;
     const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
     const query: Prisma.ExamWhereInput = {};
+    query.lesson={};
     if (queryparams) {
         for (const [key, value] of Object.entries(queryparams)) {
             switch (key) {
                 case "classId":
-                    query.lesson = {
-                        classId: Number(value),
-                    }
+                    query.lesson.classId = Number(value);
                     break;
                 case "teacherId":
-                    query.lesson = {
-                        teacherId: value,
-                    }
+                    query.lesson.teacherId = value;
                     break;
                 case "search":
-                    query.lesson = {
-                        subject: { name: { contains: value, mode: "insensitive" } }
-                    }
+                    query.lesson.subject = { name: { contains: value, mode: "insensitive" } }
                     break;
                 default:
                     break;
             }
         }
+    }
+    //Role conditions
+    switch (role) {
+        case "admin":
+            break;
+        case "teacher":
+            query.lesson.teacherId = currentUserId;
+            break;
+        case "student":
+            query.lesson.class = {
+                students: {
+                    some: {
+                        id: currentUserId
+                    }
+                }
+            };
+            break;
+        case "parent":
+            query.lesson.class = {
+                students: {
+                    some: {
+                        parentId: currentUserId
+                    }
+                }
+            };
+            break;
+        default:
+            break;
     }
     const [examsData, count] = await prisma.$transaction([
         prisma.exam.findMany({
@@ -127,7 +152,7 @@ export default async function ExamsListPage({ searchParams }: { searchParams: { 
                         <button className="w-8 h-8 rounded-full bg-medaliYellow flex items-center justify-center">
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
-                        {role === "admin" && 
+                        {role === "admin" || role === "teacher" && 
                         <>
                             <FormModal table="exams" type="create" />
                         </>
@@ -136,7 +161,7 @@ export default async function ExamsListPage({ searchParams }: { searchParams: { 
                 </div>
             </div>
             {/* list */}
-            <Table columns={Columns} renderRow={renderRow} data={examsData} />
+            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={examsData} />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />
         </div>

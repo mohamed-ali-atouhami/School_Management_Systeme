@@ -3,12 +3,11 @@ import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import Link from "next/link";
-import { role } from "@/lib/data";
 import FormModal from "@/components/FormModal";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Attendance, Grade, Class, Parent, Prisma, Result, Student } from "@prisma/client";
-
+import { auth } from "@clerk/nextjs/server";
 type Students = Student & {
     attendances: Attendance[];
     results: Result[];
@@ -16,7 +15,7 @@ type Students = Student & {
     grade: Grade;
     parent: Parent;
 }
-const Columns = [
+const getColumns = (role?: string) => [
     {
         header: "Info",
         accessor: "info",
@@ -41,13 +40,13 @@ const Columns = [
         accessor: "address",
         className: "hidden lg:table-cell",
     },
-    {
+    ...(role === "admin" ? [{
         header: "Actions",
         accessor: "actions",
-    },
+    }] : []),
 
 ]
-const renderRow = (student: Students) => {
+const renderRow = (role?: string) => (student: Students) => {
     return (
         <tr key={student.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
             <td className="flex items-center gap-4 p-4">
@@ -84,6 +83,9 @@ const renderRow = (student: Students) => {
 }
 
 export default async function StudentsListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+    const { sessionClaims ,userId} = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+    const currentUserId = userId!;
     const { page, ...queryparams } = searchParams;
     const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
@@ -109,6 +111,20 @@ export default async function StudentsListPage({ searchParams }: { searchParams:
                     break;
             }
         }
+    }
+    //Role conditions
+    switch (role) {
+        case "admin":
+            break;
+        case "teacher":
+            query.class = {
+                lessons: {
+                    some: { teacherId: currentUserId }
+                }
+            }
+            break;
+        default:
+            break;
     }
     const [studentsData, count] = await prisma.$transaction([
         prisma.student.findMany({
@@ -149,7 +165,7 @@ export default async function StudentsListPage({ searchParams }: { searchParams:
                 </div>
             </div>
             {/* list */}
-            <Table columns={Columns} renderRow={renderRow} data={studentsData} />
+            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={studentsData} />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />
         </div>

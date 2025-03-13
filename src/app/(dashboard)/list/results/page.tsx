@@ -2,12 +2,11 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import { role } from "@/lib/data";
 import FormModal from "@/components/FormModal";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Prisma} from "@prisma/client";
 import prisma from "@/lib/prisma";
-
+import { auth } from "@clerk/nextjs/server";
 type Results = {
     id:number,
     title:string,
@@ -20,7 +19,7 @@ type Results = {
     startTime:Date,
     type:string,
 }
-const Columns = [
+const getColumns = (role?: string) => [
     {
         header: "Title",
         accessor: "title",
@@ -54,13 +53,13 @@ const Columns = [
         accessor: "type",
         className: "hidden lg:table-cell",
     },
-    {
+    ...(role === "admin" || role === "teacher" ? [{
         header: "Actions",
         accessor: "actions",
-    },
+    }] : []),
 
 ]
-const renderRow = (result: Results) => {
+const renderRow = (role?: string) => (result: Results) => {
     return (
         <tr key={result.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
             <td className="flex items-center gap-4 p-4">
@@ -74,11 +73,11 @@ const renderRow = (result: Results) => {
             <td className="hidden lg:table-cell">{result.type}</td>
             <td>
                 <div className="flex items-center gap-2">
-                    {role === "admin" && 
-                    <>
-                        <FormModal table="results" type="edit" data={result} />
-                        <FormModal table="results" type="delete" id={result.id} />
-                    </>
+                    {(role === "admin" || role === "teacher") && 
+                        <>
+                            <FormModal table="results" type="edit" data={result} />
+                            <FormModal table="results" type="delete" id={result.id} />
+                        </>
                     }
                 </div>
             </td>
@@ -87,6 +86,9 @@ const renderRow = (result: Results) => {
 }
 
 export default async function ResultsListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+    const { sessionClaims ,userId} = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+    const currentUserId = userId!;
     const { page, ...queryparams } = searchParams;
     const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
@@ -109,6 +111,39 @@ export default async function ResultsListPage({ searchParams }: { searchParams: 
                     break;
             }
         }
+    }
+    //Role conditions
+    switch (role) {
+        case "admin":
+            break;
+        case "teacher":
+            query.OR = [
+                {
+                    exam: {
+                        lesson: {
+                            teacherId: currentUserId
+                        }
+                    }
+                },
+                {
+                    assignment: {
+                        lesson: {
+                            teacherId: currentUserId
+                        }
+                    }
+                }
+            ];
+            break;
+        case "student":
+            query.studentId = currentUserId;
+            break;
+        case "parent":
+            query.student = {
+                parentId: currentUserId
+            };
+            break;
+        default:
+            break;
     }
     const [resultsData, count] = await prisma.$transaction([
         prisma.result.findMany({
@@ -180,16 +215,14 @@ export default async function ResultsListPage({ searchParams }: { searchParams: 
                         <button className="w-8 h-8 rounded-full bg-medaliYellow flex items-center justify-center">
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
-                        {role === "admin" && 
-                        <>
+                        {role === "admin" || role === "teacher" && 
                             <FormModal table="results" type="create" />
-                        </>
                         }
                     </div>
                 </div>
             </div>
             {/* list */}
-            <Table columns={Columns} renderRow={renderRow} data={data} />
+            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={data} />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />
         </div>

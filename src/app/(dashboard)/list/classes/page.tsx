@@ -2,17 +2,16 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import { role } from "@/lib/data";
 import FormModal from "@/components/FormModal";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Class, Grade, Prisma, Teacher } from "@prisma/client";
-
+import { auth } from "@clerk/nextjs/server";
 type Classes = Class & {
     supervisor: Teacher;
     grade: Grade;
 }
-const Columns = [
+const getColumns = (role?: string) => [
     {
         header: "Class Name",
         accessor: "name",
@@ -32,13 +31,13 @@ const Columns = [
         accessor: "supervisor",
         className: "hidden md:table-cell",
     },
-    {
+    ...(role === "admin" ? [{
         header: "Actions",
         accessor: "actions",
-    },
+    }] : []),
 
 ]
-const renderRow = (classes: Classes) => {
+const renderRow = (role?: string) => (classes: Classes) => {
     return (
         <tr key={classes.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
             <td className="flex items-center gap-4 p-4">
@@ -62,7 +61,8 @@ const renderRow = (classes: Classes) => {
 }
 
 export default async function ClassesListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
-
+    const { sessionClaims } = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
     const { page, ...queryparams } = searchParams;
     const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
@@ -118,7 +118,7 @@ export default async function ClassesListPage({ searchParams }: { searchParams: 
                 </div>
             </div>
             {/* list */}
-            <Table columns={Columns} renderRow={renderRow} data={classesData} />
+            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={classesData} />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />
         </div>

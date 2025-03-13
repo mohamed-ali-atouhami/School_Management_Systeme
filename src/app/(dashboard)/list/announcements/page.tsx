@@ -2,16 +2,17 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import { role } from "@/lib/data";
 import FormModal from "@/components/FormModal";
 import { Class, Announcement, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { ITEMS_PER_PAGE } from "@/lib/settings";    
+import { ITEMS_PER_PAGE } from "@/lib/settings";
+import { auth } from "@clerk/nextjs/server";
 
 type Announcements = Announcement & {
     class: Class;
 }
-const Columns = [
+
+const getColumns = (role?: string) => [
     {
         header: "Title",
         accessor: "title",
@@ -25,35 +26,39 @@ const Columns = [
         accessor: "date",
         className: "hidden lg:table-cell",
     },
-    {
+    ...(role === "admin" ? [{
         header: "Actions",
         accessor: "actions",
-    },
+    }] : []),
+];
 
-
-]
-const renderRow = (announcement: Announcements) => {
+const renderRow = (role?: string) => (announcement: Announcements) => {
     return (
         <tr key={announcement.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
             <td className="flex items-center gap-4 p-4">
                 {announcement.title}
             </td>
-            <td >{announcement.class.name}</td>
-            <td className="hidden lg:table-cell">{new Date(announcement.date).toLocaleString("GMT",{day: "2-digit", month: "2-digit", year: "numeric"})}</td>
+            <td>{announcement.class?.name || "-"}</td>
+            <td className="hidden lg:table-cell">{new Date(announcement.date).toLocaleString("GMT", { day: "2-digit", month: "2-digit", year: "numeric" })}</td>
             <td>
                 <div className="flex items-center gap-2">
-                    {role === "admin" && 
-                    <>
-                        <FormModal table="announcements" type="edit" data={announcement} />
-                        <FormModal table="announcements" type="delete" id={announcement.id} />
-                    </>
+                    {role === "admin" &&
+                        <>
+                            <FormModal table="announcements" type="edit" data={announcement} />
+                            <FormModal table="announcements" type="delete" id={announcement.id} />
+                        </>
                     }
                 </div>
             </td>
         </tr>
     )
-}
+};
+
 export default async function AnnouncementsListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+    const { sessionClaims ,userId} = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+    const currentUserId = userId!;
+
     const { page, ...queryparams } = searchParams;
     const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
@@ -72,11 +77,46 @@ export default async function AnnouncementsListPage({ searchParams }: { searchPa
             }
         }
     }
+    //Role conditions
+    const roleConditions = {
+        admin: {},
+        teacher: {
+            lessons: {
+                some: {
+                    teacherId: currentUserId
+                }
+            }
+        },
+        student: {
+            class: {
+                students: {
+                    some: {
+                        id: currentUserId
+                    }
+                }
+            }
+        },
+        parent: {
+            class: {
+                students: {
+                    some: {
+                        parentId: currentUserId
+                    }
+                }
+            }
+        }
+    }
+    query.OR = [
+        {
+            classId: null
+        },
+        roleConditions[role as keyof typeof roleConditions]
+    ]
     const [announcementsData, count] = await prisma.$transaction([
         prisma.announcement.findMany({
             where: query,
             include: {
-                class: {select: {name: true}},
+                class: { select: { name: true } },
             },
             take: ITEMS_PER_PAGE,
             skip: (pageNumber - 1) * ITEMS_PER_PAGE,
@@ -99,7 +139,7 @@ export default async function AnnouncementsListPage({ searchParams }: { searchPa
                         <button className="w-8 h-8 rounded-full bg-medaliYellow flex items-center justify-center">
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
-                        {role === "admin" && 
+                        {role === "admin" &&
                             <>
                                 <FormModal table="announcements" type="create" />
                             </>
@@ -108,7 +148,11 @@ export default async function AnnouncementsListPage({ searchParams }: { searchPa
                 </div>
             </div>
             {/* list */}
-            <Table columns={Columns} renderRow={renderRow} data={announcementsData} />
+            <Table
+                columns={getColumns(role)}
+                renderRow={renderRow(role)}
+                data={announcementsData}
+            />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />
         </div>
