@@ -7,13 +7,12 @@ type InputFieldsProps = {
     name: string;
     control: Control<any>;
     placeholder?: string;
-    defaultValue?: string;
-    value?: string;
+    hidden?: boolean;
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
-export default function InputFields({ type, label, placeholder, defaultValue, control, name, onChange, value }: InputFieldsProps) {
+export default function InputFields({ type, label, placeholder, control, name, hidden }: InputFieldsProps) {
     return (
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
+        <div className={hidden ? "hidden" : "flex flex-col gap-2 w-full md:w-1/4"}>
             <FormField
                 control={control}
                 name={name}
@@ -21,7 +20,7 @@ export default function InputFields({ type, label, placeholder, defaultValue, co
                     <FormItem>
                         <FormLabel>{label}</FormLabel>
                         <FormControl>
-                            <Input type={type} placeholder={placeholder} {...field} defaultValue={defaultValue} value={value} onChange={onChange} />
+                            <Input type={type} placeholder={placeholder} {...field} hidden={hidden} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>

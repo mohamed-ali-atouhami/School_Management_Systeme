@@ -7,6 +7,7 @@ import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Prisma, Subject, Teacher } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
+import FormContainer from "@/components/Forms/FormContainer";
 type Subjects = Subject & {
     teachers: Teacher[];
 }
@@ -36,8 +37,8 @@ const renderRow = (role?: string) => (subject: Subjects) => {
                 <div className="flex items-center gap-2">
                     {role === "admin" && 
                     <>
-                        <FormModal table="subjects" type="edit" data={subject} />
-                        <FormModal table="subjects" type="delete" id={subject.id} />
+                        <FormContainer table="subjects" type="edit" data={subject} />
+                        <FormContainer table="subjects" type="delete" id={subject.id} />
                     </>
                     }
                 </div>
@@ -72,11 +73,22 @@ export default async function SubjectsListPage({searchParams}: {searchParams:{[k
             },
             take: ITEMS_PER_PAGE,
             skip: (pageNumber - 1) * ITEMS_PER_PAGE,
+            orderBy: {
+                //name: "desc",
+                createdAt: "desc",
+            },
         }),
         prisma.subject.count({
             where: query,
         }),
     ]);
+    const relatedData = await prisma.teacher.findMany({
+        select: {
+            id: true,
+            name: true,
+            surname: true
+        }
+    })
     return (
         <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
             {/* top */}
@@ -93,7 +105,7 @@ export default async function SubjectsListPage({searchParams}: {searchParams:{[k
                         </button>
                         {role === "admin" && 
                         <>
-                            <FormModal table="subjects" type="create" />
+                            <FormContainer table="subjects" type="create" relatedData={relatedData}/>
                         </>
                         }
                     </div>

@@ -40,7 +40,7 @@ const formSchema = z.object({
     image: z.instanceof(File, { message: "Invalid image." }),
 })
 
-export default function StudentForm({ type, data }: { type: "create" | "edit", data?: any }) {
+export default function StudentForm({ type, data, setOpen }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void }) {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
