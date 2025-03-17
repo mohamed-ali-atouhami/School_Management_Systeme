@@ -2,7 +2,7 @@ import { FormControl, FormMessage, FormLabel, FormField, FormItem } from "./ui/f
 import { Input } from "./ui/input";
 import { Control } from "react-hook-form";
 type InputFieldsProps = {
-    type: string;
+    type?: string;
     label: string;
     name: string;
     control: Control<any>;

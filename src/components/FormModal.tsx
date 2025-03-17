@@ -15,7 +15,7 @@ import Image from "next/image"
 import React, { useState, useTransition } from "react"
 import dynamic from "next/dynamic"
 import { Loader } from "lucide-react"
-import { deleteSubject } from "@/lib/Actions"
+import { deleteSubject, deleteClass } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { FormContainerProps } from "./Forms/FormContainer"
@@ -51,6 +51,7 @@ type DeleteFunction = (formData: FormData) => Promise<boolean>;
 // Then create a proper type for the deleteMap
 const deleteMap: Partial<Record<"students" | "teachers" | "parents" | "classes" | "exams" | "assignments" | "results" | "events" | "announcements" | "attendance" | "lessons" | "subjects", DeleteFunction>> = {
     subjects: deleteSubject,
+    classes: deleteClass,
     // teachers: deleteTeacher,
     // students: deleteStudent,
 }

@@ -2,11 +2,11 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import FormModal from "@/components/FormModal";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Class, Grade, Prisma, Teacher } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
+import FormContainer from "@/components/Forms/FormContainer";
 type Classes = Class & {
     supervisor: Teacher;
     grade: Grade;
@@ -50,8 +50,8 @@ const renderRow = (role?: string) => (classes: Classes) => {
                 <div className="flex items-center gap-2">
                     {role === "admin" &&
                         <>
-                            <FormModal table="classes" type="edit" data={classes} />
-                            <FormModal table="classes" type="delete" id={classes.id} />
+                            <FormContainer table="classes" type="edit" data={classes} />
+                            <FormContainer table="classes" type="delete" id={classes.id} />
                         </>
                     }
                 </div>
@@ -90,6 +90,9 @@ export default async function ClassesListPage({ searchParams }: { searchParams: 
             },
             take: ITEMS_PER_PAGE,
             skip: (pageNumber - 1) * ITEMS_PER_PAGE,
+            orderBy: {
+                createdAt: "desc",
+            },
         }),
         prisma.class.count({
             where: query,
@@ -111,7 +114,7 @@ export default async function ClassesListPage({ searchParams }: { searchParams: 
                         </button>
                         {role === "admin" &&
                             <>
-                                <FormModal table="classes" type="create" />
+                                <FormContainer table="classes" type="create" />
                             </>
                         }
                     </div>

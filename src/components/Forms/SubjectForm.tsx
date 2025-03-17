@@ -91,6 +91,7 @@ export default function SubjectForm({ type, data, setOpen, relatedData }: { type
                                             onChange={(newValue) => {
                                                 field.onChange(newValue ? newValue.map(v => v.value) : [])
                                             }}
+                                            defaultValue={defaultTeachers}
                                             className="basic-multi-select"
                                             classNamePrefix="select"
                                             placeholder="Select teachers..."

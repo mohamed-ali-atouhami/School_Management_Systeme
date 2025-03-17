@@ -11,6 +11,7 @@ export default async function EventList({dateParam}: {dateParam: string | undefi
         }
     });
     return (
+        events.length > 0 ? (
             events.map((event) => (
                 <div key={event.id} className="p-5 rounded-md border-2 border-gray-100 border-t-4 odd:border-t-medaliSky even:border-t-medaliPurple">
                     <div className="flex items-center justify-between">
@@ -18,7 +19,12 @@ export default async function EventList({dateParam}: {dateParam: string | undefi
                         <span className="text-xs text-gray-300">{event.startTime.toLocaleString('GMT', { hour: 'numeric', minute: '2-digit', hour12: false })}</span>
                     </div>
                     <p className="text-sm text-gray-400 mt-2">{event.description}</p>
+                </div>
+            ))
+        ) : (
+            <div className="flex items-center justify-center h-full">
+                <p className="text-gray-400">No events found for today</p>
             </div>
-        ))
-    )
+        )
+    );
 }

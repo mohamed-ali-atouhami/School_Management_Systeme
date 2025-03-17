@@ -82,13 +82,13 @@ export default async function SubjectsListPage({searchParams}: {searchParams:{[k
             where: query,
         }),
     ]);
-    const relatedData = await prisma.teacher.findMany({
-        select: {
-            id: true,
-            name: true,
-            surname: true
-        }
-    })
+    // const relatedData = await prisma.teacher.findMany({
+    //     select: {
+    //         id: true,
+    //         name: true,
+    //         surname: true
+    //     }
+    // })
     return (
         <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
             {/* top */}
@@ -105,7 +105,7 @@ export default async function SubjectsListPage({searchParams}: {searchParams:{[k
                         </button>
                         {role === "admin" && 
                         <>
-                            <FormContainer table="subjects" type="create" relatedData={relatedData}/>
+                            <FormContainer table="subjects" type="create" />
                         </>
                         }
                     </div>

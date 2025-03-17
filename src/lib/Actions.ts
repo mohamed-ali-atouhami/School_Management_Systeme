@@ -1,6 +1,6 @@
 "use server"
 
-import { SubjectSchema } from "./FormValidationSchema"
+import { SubjectSchema, ClassSchema } from "./FormValidationSchema"
 import prisma from "./prisma"
 type CurrentState = {
     success: boolean,
@@ -62,4 +62,58 @@ export async function deleteSubject(formData: FormData) {
     }
 }
 
+export async function createClass(currentState: CurrentState, formData: ClassSchema) {
+    if (!formData || !formData.className) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
 
+    try {
+        await prisma.class.create({
+            data: {
+                name: formData.className,
+                capacity: formData.capacity,
+                gradeId: formData.gradeId,
+                supervisorId: formData.supervisorId
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function updateClass(currentState: CurrentState, formData: ClassSchema) {
+    if (!formData || !formData.id || !formData.className) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+
+    try {
+        await prisma.class.update({
+            where: { id: formData.id },
+            data: {
+                name: formData.className,
+                capacity: formData.capacity,
+                gradeId: formData.gradeId,
+                supervisorId: formData.supervisorId
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function deleteClass(formData: FormData) {
+    const id = formData.get("id")
+    try {
+        await prisma.class.delete({
+            where: { id: Number(id) },
+        })
+        return true
+    } catch (error) {
+        console.error(error)
+        return false
+    }
+}
