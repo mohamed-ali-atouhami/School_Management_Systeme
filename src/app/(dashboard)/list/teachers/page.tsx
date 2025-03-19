@@ -3,11 +3,11 @@ import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import Link from "next/link";
-import FormModal from "@/components/FormModal";
 import { Teacher, Subject, Class, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { auth } from "@clerk/nextjs/server";
+import FormContainer from "@/components/Forms/FormContainer";
 type Teachers = Teacher & {
     subjects: Subject[];
     classes: Class[];
@@ -78,7 +78,7 @@ const renderRow = (role?: string) => (teacher: Teachers) => {
                         </button>
                     </Link>
                     {role === "admin" &&
-                        <FormModal table="teachers" type="delete" id={teacher.id} />
+                        <FormContainer table="teachers" type="delete" id={teacher.id} />
                     }
                 </div>
             </td>
@@ -142,7 +142,7 @@ export default async function TeachersListPage({ searchParams }: { searchParams:
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
                         {role === "admin" &&
-                            <FormModal table="teachers" type="create" />
+                            <FormContainer table="teachers" type="create" />
                         }
                     </div>
                 </div>

@@ -56,7 +56,8 @@ async function main() {
         address: `Address${i}`,
         bloodType: "A_PLUS",
         sex: i % 2 === 0 ? Sex.MALE : Sex.FEMALE,
-        subjects: { connect: [{ id: (i % 10) + 1 }] }
+        subjects: { connect: [{ id: (i % 10) + 1 }] },
+        birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 10)),
         // Removed classes connection
       },
     });
@@ -134,7 +135,7 @@ async function main() {
         parentId: `parentId${Math.ceil(i / 2) % 25 || 25}`, 
         gradeId: (i % 6) + 1, 
         classId: (i % 6) + 1, 
-        //birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 10)),
+        birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 10)),
       },
     });
   }

@@ -1,11 +1,13 @@
 "use server"
 
-import { SubjectSchema, ClassSchema } from "./FormValidationSchema"
+import { clerkClient } from "@clerk/nextjs/server"
+import { SubjectSchema, ClassSchema, TeacherSchema } from "./FormValidationSchema"
 import prisma from "./prisma"
 type CurrentState = {
     success: boolean,
     error: boolean
 }
+// Subject Actions
 export async function createSubject(currentState: CurrentState, formData: SubjectSchema) {
     if (!formData || !formData.subjectName) {
         console.error('Invalid form data received:', formData)
@@ -61,7 +63,7 @@ export async function deleteSubject(formData: FormData) {
         return false
     }
 }
-
+// Class Actions
 export async function createClass(currentState: CurrentState, formData: ClassSchema) {
     if (!formData || !formData.className) {
         console.error('Invalid form data received:', formData)
@@ -115,5 +117,73 @@ export async function deleteClass(formData: FormData) {
     } catch (error) {
         console.error(error)
         return false
+    }
+}
+// Teacher Actions
+export async function createTeacher(currentState: CurrentState, formData: TeacherSchema) {
+    if (!formData || !formData.username || !formData.name || !formData.surname || !formData.email || !formData.phone || !formData.address || !formData.birthday || !formData.bloodType || !formData.sex) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+    try {
+        const user = await (await clerkClient()).users.createUser({
+            username: formData.username,
+            password: formData.password,
+            publicMetadata: {
+                role: "teacher",
+            },
+        })
+        await prisma.teacher.create({
+            data: {
+                id: user.id,
+                username: formData.username,
+                name: formData.name,
+                surname: formData.surname,
+                email: formData.email,
+                phone: formData.phone,
+                address: formData.address,
+                bloodType: formData.bloodType,
+                sex: formData.sex,
+                birthday: formData.birthday,
+                image: formData.img || '',
+                subjects: {
+                    connect: formData.subjects?.map((subjectId: string) => ({ id: Number(subjectId) }))
+                },
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function updateTeacher(currentState: CurrentState, formData: TeacherSchema) {
+    if (!formData || !formData.id || !formData.username || !formData.name || !formData.surname || !formData.email || !formData.phone || !formData.birthday || !formData.address || !formData.bloodType || !formData.sex || !formData.img) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+    try {
+        await prisma.teacher.update({
+            where: { id: formData.id },
+            data: {
+                username: formData.username,
+                name: formData.name,
+                surname: formData.surname,
+                email: formData.email,
+                phone: formData.phone,
+                address: formData.address,
+                bloodType: formData.bloodType,
+                sex: formData.sex,
+                image: formData.img,
+                birthday: formData.birthday,
+                subjects: {
+                    set: formData.subjects?.map((subjectId: string) => ({ id: Number(subjectId) }))
+                }
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
     }
 }
