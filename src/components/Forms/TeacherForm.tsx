@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -16,9 +15,11 @@ import { Select, SelectContent, SelectValue, SelectTrigger, SelectItem } from "@
 import InputFields from "../InputFields"
 import { teacherSchema, TeacherSchema } from "@/lib/FormValidationSchema"
 import { toast } from "sonner"
-import { useTransition, useActionState, useEffect } from "react"
+import { useTransition, useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { createTeacher, updateTeacher } from "@/lib/Actions"
+import { createTeacher } from "@/lib/Actions"
+//import { UploadDropzone } from "@/lib/uploadthing"
+//import Image from "next/image"
 
 export default function TeacherForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: any }) {
     const form = useForm<TeacherSchema>({
@@ -39,8 +40,9 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
         },
     })
     const [isPending, startTransition] = useTransition()
-    const [state, formAction] = useActionState(type === "create" ? createTeacher : updateTeacher, { success: false, error: false })
+    const [state, formAction] = useActionState(createTeacher, { success: false, error: false })
     const router = useRouter()
+    //const [image, setImage] = useState<string>(data?.img || "")
     useEffect(() => {
         if (state?.success === true) {
             toast.success(`Teacher ${type === "create" ? "created" : "updated"} successfully!`)
@@ -53,6 +55,7 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
     }, [state, type, form, router])
 
     function onSubmit(values: TeacherSchema) {
+        console.log("form submitted: ",values)
         const payload = {
             id: data?.id,
             username: values.username,
@@ -65,9 +68,10 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
             bloodType: values.bloodType,
             sex: values.sex,
             birthday: values.birthday,
-            //img: values.img || '',
+            img: values.img || '',
             subjects: values.subjects || [],
         }
+        console.log("payload with image: ",payload)
         startTransition(() => {
             formAction(payload)
         })
@@ -134,24 +138,22 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
                         )}
                     />
                     <FormField
-                            control={form.control}
-                            name="birthday"
-                            render={({ field: { onChange, ...field } }) => (
-                                <FormItem>
-                                    <FormLabel>
-                                        Birth Date
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="date"
-                                            onChange={onChange}
-                                            defaultValue={data?.birthday ? new Date(data?.birthday).toISOString().split('T')[0] : ''}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        control={form.control}
+                        name="birthday"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Birth Date</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="date"
+                                        {...field}
+                                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                     <div className="flex flex-col gap-2 w-full md:w-1/4">
                         <FormField
                             control={form.control}
@@ -163,10 +165,14 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
                                         <select
                                             multiple
                                             className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2"
-                                            defaultValue={data?.subjects || []}
+                                            value={field.value || []}
+                                            onChange={(e) => {
+                                                const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+                                                field.onChange(selectedOptions);
+                                            }}
                                         >
                                             {subjects.map((subject: { id: number, name: string }) => (
-                                                <option key={subject.id} value={subject.id}>
+                                                <option key={subject.id} value={subject.id.toString()}>
                                                     {subject.name}
                                                 </option>
                                             ))}
@@ -176,8 +182,46 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
                                 </FormItem>
                             )}
                         />
+                        
                     </div>
                 </div>
+                {/* <FormField
+                    control={form.control}
+                    name="img"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Image</FormLabel>
+                            <FormControl>
+                                <div className="space-y-4">
+                                    <UploadDropzone
+                                        endpoint="imageUploader"
+                                        onClientUploadComplete={(res) => {
+                                            if (res?.[0]) {
+                                                field.onChange(res[0].url);
+                                                setImage(res[0].url);
+                                                toast.success("Image uploaded successfully!");
+                                            }
+                                        }}
+                                        onUploadError={(error: Error) => {
+                                            toast.error(`Upload failed: ${error.message}`);
+                                        }}
+                                    />
+                                    {image && (
+                                        <div className="relative w-20 h-20 hover:opacity-80 transition-opacity">
+                                            <Image
+                                                src={image}
+                                                alt="Preview"
+                                                fill
+                                                className="object-cover rounded-md"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                /> */}
                 <Button type="submit" disabled={isPending}>{isPending ? type === "create" ? "Creating..." : "Updating..." : type === "create" ? "Create" : "Update"}</Button>
             </form>
         </Form>
