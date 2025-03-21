@@ -152,7 +152,7 @@ export async function createTeacher(currentState: CurrentState, formData: Teache
                 bloodType: formData.bloodType,
                 sex: formData.sex,
                 birthday: formData.birthday,
-                image: formData.img || '',
+                image: formData.image || '',
                 subjects: {
                     connect: formData.subjects?.map((subjectId: string) => ({ id: parseInt(subjectId) })) || []
                 },

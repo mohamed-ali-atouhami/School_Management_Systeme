@@ -15,11 +15,11 @@ import { Select, SelectContent, SelectValue, SelectTrigger, SelectItem } from "@
 import InputFields from "../InputFields"
 import { teacherSchema, TeacherSchema } from "@/lib/FormValidationSchema"
 import { toast } from "sonner"
-import { useTransition, useActionState, useEffect, useState } from "react"
+import { useTransition, useActionState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createTeacher } from "@/lib/Actions"
-//import { UploadDropzone } from "@/lib/uploadthing"
-//import Image from "next/image"
+import { UploadButton } from "@/lib/uploadthing"
+import Image from "next/image"
 
 export default function TeacherForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: any }) {
     const form = useForm<TeacherSchema>({
@@ -35,14 +35,13 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
             bloodType: data?.bloodType || "",
             sex: data?.sex || "",
             birthday: data?.birthday || "",
-            //img: data?.img || "",
+            image: data?.image || "",
             subjects: data?.subjects || [],
         },
     })
     const [isPending, startTransition] = useTransition()
     const [state, formAction] = useActionState(createTeacher, { success: false, error: false })
     const router = useRouter()
-    //const [image, setImage] = useState<string>(data?.img || "")
     useEffect(() => {
         if (state?.success === true) {
             toast.success(`Teacher ${type === "create" ? "created" : "updated"} successfully!`)
@@ -56,24 +55,24 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
 
     function onSubmit(values: TeacherSchema) {
         console.log("form submitted: ",values)
-        const payload = {
-            id: data?.id,
-            username: values.username,
-            email: values.email,
-            password: values.password,
-            name: values.name,
-            surname: values.surname,
-            phone: values.phone,
-            address: values.address,
-            bloodType: values.bloodType,
-            sex: values.sex,
-            birthday: values.birthday,
-            img: values.img || '',
-            subjects: values.subjects || [],
-        }
-        console.log("payload with image: ",payload)
+        // const payload = {
+        //     id: data?.id,
+        //     username: values.username,
+        //     email: values.email,
+        //     password: values.password,
+        //     name: values.name,
+        //     surname: values.surname,
+        //     phone: values.phone,
+        //     address: values.address,
+        //     bloodType: values.bloodType,
+        //     sex: values.sex,
+        //     birthday: values.birthday,
+        //     image: values.image || '',
+        //     subjects: values.subjects || [],
+        // }
+        //console.log("payload with image: ",payload)
         startTransition(() => {
-            formAction(payload)
+            formAction(values)
         })
     }
     const subjects = relatedData?.subjects || []
@@ -185,20 +184,19 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
                         
                     </div>
                 </div>
-                {/* <FormField
+                <FormField
                     control={form.control}
-                    name="img"
-                    render={({ field }) => (
+                    name="image"
+                    render={({ field: { value, onChange, ...field } }) => (
                         <FormItem>
                             <FormLabel>Image</FormLabel>
                             <FormControl>
                                 <div className="space-y-4">
-                                    <UploadDropzone
+                                    <UploadButton
                                         endpoint="imageUploader"
                                         onClientUploadComplete={(res) => {
                                             if (res?.[0]) {
-                                                field.onChange(res[0].url);
-                                                setImage(res[0].url);
+                                                onChange(res[0].url);
                                                 toast.success("Image uploaded successfully!");
                                             }
                                         }}
@@ -206,10 +204,10 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
                                             toast.error(`Upload failed: ${error.message}`);
                                         }}
                                     />
-                                    {image && (
+                                    {value && (
                                         <div className="relative w-20 h-20 hover:opacity-80 transition-opacity">
                                             <Image
-                                                src={image}
+                                                src={value}
                                                 alt="Preview"
                                                 fill
                                                 className="object-cover rounded-md"
@@ -221,7 +219,7 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
                             <FormMessage />
                         </FormItem>
                     )}
-                /> */}
+                />
                 <Button type="submit" disabled={isPending}>{isPending ? type === "create" ? "Creating..." : "Updating..." : type === "create" ? "Create" : "Update"}</Button>
             </form>
         </Form>
