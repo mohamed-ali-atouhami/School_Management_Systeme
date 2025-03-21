@@ -122,6 +122,9 @@ export default async function TeachersListPage({ searchParams }: { searchParams:
             },
             take: ITEMS_PER_PAGE,
             skip: (pageNumber - 1) * ITEMS_PER_PAGE,
+            orderBy: {
+                createdAt: "desc"
+            }
         }),
         prisma.teacher.count({
             where: query,
