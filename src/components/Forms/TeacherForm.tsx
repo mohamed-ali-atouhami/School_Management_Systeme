@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectValue, SelectTrigger, SelectItem } from "@
 import InputFields from "../InputFields"
 import { teacherSchema, TeacherSchema } from "@/lib/FormValidationSchema"
 import { toast } from "sonner"
-import { useTransition, useActionState, useEffect } from "react"
+import { useTransition, useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createTeacher } from "@/lib/Actions"
 import { UploadButton } from "@/lib/uploadthing"
@@ -42,38 +42,33 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
     const [isPending, startTransition] = useTransition()
     const [state, formAction] = useActionState(createTeacher, { success: false, error: false })
     const router = useRouter()
+    const [isSubmitting, setIsSubmitting] = useState(false)
     useEffect(() => {
         if (state?.success === true) {
             toast.success(`Teacher ${type === "create" ? "created" : "updated"} successfully!`)
             form.reset()
             setOpen(false)
-            router.push("/list/teachers")
-        } else if (state?.error === true) {
-            toast.error(`Failed to ${type === "create" ? "create" : "update"} teacher!`)
+            router.refresh()
+        } else if (state?.error) {
+            toast.error(`Failed to ${type === "create" ? "create" : "update"} teacher: ${state.error}`)
+            console.error("Form action error:", state.error)
         }
-    }, [state, type, form, router])
+    }, [state, type, form, router, setOpen])
 
     function onSubmit(values: TeacherSchema) {
-        console.log("form submitted: ",values)
-        // const payload = {
-        //     id: data?.id,
-        //     username: values.username,
-        //     email: values.email,
-        //     password: values.password,
-        //     name: values.name,
-        //     surname: values.surname,
-        //     phone: values.phone,
-        //     address: values.address,
-        //     bloodType: values.bloodType,
-        //     sex: values.sex,
-        //     birthday: values.birthday,
-        //     image: values.image || '',
-        //     subjects: values.subjects || [],
-        // }
-        //console.log("payload with image: ",payload)
+        if (isSubmitting) return;
+        
+        setIsSubmitting(true);
         startTransition(() => {
-            formAction(values)
-        })
+            try {
+                formAction(values);
+            } catch (error) {
+                console.error("Form submission error:", error);
+                toast.error("An unexpected error occurred");
+            } finally {
+                setIsSubmitting(false);
+            }
+        });
     }
     const subjects = relatedData?.subjects || []
     return (
