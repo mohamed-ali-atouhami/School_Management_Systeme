@@ -17,14 +17,15 @@ import { teacherSchema, TeacherSchema } from "@/lib/FormValidationSchema"
 import { toast } from "sonner"
 import { useTransition, useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { createTeacher } from "@/lib/Actions"
+import { createTeacher, updateTeacher } from "@/lib/Actions"
 import { UploadButton } from "@/lib/uploadthing"
 import Image from "next/image"
-
+import MultiSelect from "react-select"
 export default function TeacherForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: any }) {
     const form = useForm<TeacherSchema>({
         resolver: zodResolver(teacherSchema),
         defaultValues: {
+            id: data?.id || "",
             username: data?.username || "",
             email: data?.email || "",
             password: data?.password || "",
@@ -36,11 +37,11 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
             sex: data?.sex || "",
             birthday: data?.birthday || "",
             image: data?.image || "",
-            subjects: data?.subjects || [],
+            subjects: data?.subjects?.map((subject: any) => subject.id.toString()) || [],
         },
     })
     const [isPending, startTransition] = useTransition()
-    const [state, formAction] = useActionState(createTeacher, { success: false, error: false })
+    const [state, formAction] = useActionState(type === "create" ? createTeacher : updateTeacher, { success: false, error: false })
     const router = useRouter()
     const [isSubmitting, setIsSubmitting] = useState(false)
     useEffect(() => {
@@ -71,12 +72,19 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
         });
     }
     const subjects = relatedData?.subjects || []
+    // Transform teacher options for react-select
+    const subjectOptions = subjects.map((subject: {id: string, name: string}) => ({
+        value: subject.id.toString(),
+        label: subject.name
+    }))
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-8">
                 <span className="text-xs text-gray-400 font-medium">Authentication Credentials</span>
                 <div className="flex justify-between flex-wrap gap-4">
                     <InputFields type="text" label="Username" placeholder="username" control={form.control} name="username" />
+                    {data && <InputFields type="text" label="Id" control={form.control} name="id" hidden/>}
                     <InputFields type="email" label="Email" placeholder="email" control={form.control} name="email" />
                     <InputFields type="password" label="Password" placeholder="password" control={form.control} name="password" />
                 </div>
@@ -156,21 +164,19 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
                                 <FormItem>
                                     <FormLabel>Subjects</FormLabel>
                                     <FormControl>
-                                        <select
-                                            multiple
-                                            className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2"
-                                            value={field.value || []}
-                                            onChange={(e) => {
-                                                const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-                                                field.onChange(selectedOptions);
+                                        <MultiSelect
+                                            options={subjectOptions}
+                                            value={subjectOptions.filter((option: any) => 
+                                                field.value?.includes(option.value)
+                                            )}
+                                            onChange={(newValue: any) => {
+                                                field.onChange(newValue.map((v: any) => v.value))
                                             }}
-                                        >
-                                            {subjects.map((subject: { id: number, name: string }) => (
-                                                <option key={subject.id} value={subject.id.toString()}>
-                                                    {subject.name}
-                                                </option>
-                                            ))}
-                                        </select>
+                                            isMulti
+                                            className="basic-multi-select"
+                                            classNamePrefix="select"
+                                            placeholder="Subjects"
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -200,13 +206,15 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
                                         }}
                                     />
                                     {value && (
-                                        <div className="relative w-20 h-20 hover:opacity-80 transition-opacity">
-                                            <Image
-                                                src={value}
-                                                alt="Preview"
-                                                fill
-                                                className="object-cover rounded-md"
-                                            />
+                                        <div className="relative w-20 h-20">
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <Image
+                                                    src={value}
+                                                    alt="Preview"
+                                                    fill
+                                                    className="object-cover rounded-md"
+                                                />
+                                            </div>
                                         </div>
                                     )}
                                 </div>

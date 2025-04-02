@@ -216,36 +216,74 @@ export async function createTeacher(currentState: CurrentState, formData: Teache
         return { success: false, error: 'An unexpected error occurred' }
     }
 }
-// export async function updateTeacher(currentState: CurrentState, formData: TeacherSchema) {
-//     if (!formData || !formData.id || !formData.username || !formData.name || !formData.surname || !formData.email || !formData.phone || !formData.birthday || !formData.address || !formData.bloodType || !formData.sex) {
-//         console.error('Invalid form data received:', formData)
-//         return { success: false, error: true }
-//     }
-//     try {
-//         await prisma.teacher.update({
-//             where: { id: formData.id },
-//             data: {
-//                 username: formData.username,
-//                 name: formData.name,
-//                 surname: formData.surname,
-//                 email: formData.email,
-//                 phone: formData.phone,
-//                 address: formData.address,
-//                 bloodType: formData.bloodType,
-//                 sex: formData.sex,
-//                 //image: formData.img,
-//                 birthday: formData.birthday,
-//                 subjects: {
-//                     set: formData.subjects?.map((subjectId: string) => ({ id: parseInt(subjectId) }))
-//                 }
-//             }
-//         })
-//         return { success: true, error: false }
-//     } catch (error) {
-//         console.error(error)
-//         return { success: false, error: true }
-//     }
-// }
+export async function updateTeacher(currentState: CurrentState, formData: TeacherSchema) {
+    if (!formData || !formData.id) {
+        console.error('FormData is null')
+        return { success: false, error: 'Invalid form data' }
+    }
+    try {
+        const clerk = await clerkClient()
+        let user;
+        if (!formData.id) {
+            return { success: false, error: 'Teacher not found' }
+        }
+        try {
+            user = await clerk.users.updateUser(formData.id, {
+                username: formData.username,
+                //password: formData.password,
+                ...(formData.password !=="" && {password: formData.password}),
+                firstName: formData.name,
+                lastName: formData.surname,
+            })
+        } catch (clerkError) {
+            console.error('Clerk user update failed:', clerkError)
+            return { success: false, error: 'Failed to update user authentication' }
+        }
+
+        if (!user || !user.id) {
+            console.error('Clerk user update succeeded but no user ID returned')
+            return { success: false, error: 'Invalid user update response' }
+        }
+        try {
+            const updatedTeacher = await prisma.teacher.update({
+                where: { id: formData.id },
+                data: {
+                    ...(formData.password !=="" && {password: formData.password}),
+                    username: formData.username,
+                    name: formData.name,
+                    surname: formData.surname,
+                    email: formData.email || '',
+                    phone: formData.phone || '',
+                    address: formData.address || '',
+                    bloodType: formData.bloodType,
+                    sex: formData.sex,
+                    birthday: formData.birthday,
+                    image: formData.image || '',
+                    subjects: {
+                        connect: formData.subjects?.map((subjectId: string) => ({ 
+                            id: parseInt(subjectId) 
+                        })) || []
+                    },
+                }
+            })
+
+            if (!updatedTeacher) {
+                throw new Error('Teacher update returned null')
+            }
+
+        } catch (dbError) {
+            console.error('Database update failed:', dbError)
+            // Clean up the created user in Clerk
+            await clerk.users.deleteUser(user.id)
+            return { success: false, error: 'Failed to update teacher record' }
+        }
+
+        return { success: true, error: false }
+    } catch (error) {
+        console.error('Unexpected error updating teacher:', error)
+        return { success: false, error: 'An unexpected error occurred' }
+    }
+}
 export async function deleteTeacher(formData: FormData) {
     const id = formData.get("id")
     try {

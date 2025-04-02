@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
         hostname: "utfs.io",
         protocol: "https",
       },
+      {
+        hostname: "images.pexels.com",
+        protocol: "https",
+      },
     ],
   },
 };
