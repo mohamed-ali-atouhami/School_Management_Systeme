@@ -3,8 +3,30 @@ import BigCalendar from "@/components/BigCalendar";
 import Image from "next/image";
 import Link from "next/link";
 import { PerformanceChart } from "@/components/PerformanceChart";
-
-export default function StudentSinglePage() {
+import prisma from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
+import FormContainer from "@/components/Forms/FormContainer";
+export default async function StudentSinglePage({params : {id}}: {params: {id: string}}) {
+    const {sessionClaims} = await auth()
+    const role = (sessionClaims?.metadata as {role?: string})?.role
+    const student = await prisma.student.findUnique({
+        where: {
+            id: id
+        },
+        include: {
+            class: {include: {
+                _count: {
+                    select: {
+                        lessons: true
+                    }
+                }
+            }},
+        }
+    })
+    if (!student) {
+        return notFound()
+    }
     return (
         <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row ">
             {/* left */}
@@ -16,7 +38,7 @@ export default function StudentSinglePage() {
                         
                         <div className="w-1/3">
                             <Image 
-                                src="https://images.pexels.com/photos/2888150/pexels-photo-2888150.jpeg?auto=compress&cs=tinysrgb&w=1200" 
+                                src={student.image || "/noAvatar.png"} 
                                 alt="user" 
                                 width={144} 
                                 height={144} 
@@ -24,26 +46,31 @@ export default function StudentSinglePage() {
                             />
                         </div>
                         <div className="w-2/3 flex flex-col justify-between gap-4">
-                            <h1 className="text-xl font-semibold">John Doe</h1>
-                            <p className="text-sm text-gray-500">
+                            <h1 className="text-xl font-semibold">{student.name + " " + student.surname}</h1>
+                            {
+                                    role === "admin" && (
+                                        <FormContainer table="students" type="edit" data={student} />
+                                    )
+                                }
+                            {/* <p className="text-sm text-gray-500">
                                 Lorem ipsum dolor sit amet consectetur adipisicing elit
-                            </p>
+                            </p> */}
                             <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-medium">
                                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
                                     <Image src="/blood.png" alt="" width={14} height={14} />
-                                    <span>A+</span>
+                                    <span>{student.bloodType}</span>
                                 </div>
                                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
                                     <Image src="/date.png" alt="" width={14} height={14} />
-                                    <span>2025-01-01</span>
+                                    <span>{student.birthday?.toLocaleDateString()}</span>
                                 </div>
                                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
                                     <Image src="/mail.png" alt="" width={14} height={14} />
-                                    <span>john@doe.com</span>
+                                    <span>{student.email}</span>
                                 </div>
                                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
                                     <Image src="/phone.png" alt="" width={14} height={14} />
-                                    <span>1234567890</span>
+                                    <span>{student.phone}</span>
                                 </div>
                             </div>
                         </div>
@@ -55,7 +82,7 @@ export default function StudentSinglePage() {
                             <div className="flex items-center gap-2">
                                 <Image src="/singleAttendance.png" alt="" width={24} height={24} className="w-6 h-6"/>
                                 <div>
-                                    <h1 className="text-xl font-semibold">6th</h1>
+                                    <h1 className="text-xl font-semibold">{student.class.name.charAt(0)}th</h1>
                                     <span className="text-sm text-gray-400">Grade</span>
                                 </div>
                             </div>
@@ -65,7 +92,7 @@ export default function StudentSinglePage() {
                             <div className="flex items-center gap-2">
                                 <Image src="/singleBranch.png" alt="" width={24} height={24} className="w-6 h-6"/>
                                 <div>
-                                    <h1 className="text-xl font-semibold">94%</h1>
+                                    <h1 className="text-xl font-semibold">90%</h1>
                                     <span className="text-sm text-gray-400">Attendance</span>
                                 </div>
                             </div>
@@ -75,7 +102,7 @@ export default function StudentSinglePage() {
                             <div className="flex items-center gap-2">
                                 <Image src="/singleLesson.png" alt="" width={24} height={24} className="w-6 h-6"/>
                                 <div>
-                                    <h1 className="text-xl font-semibold">10</h1>
+                                    <h1 className="text-xl font-semibold">{student.class._count.lessons}</h1>
                                     <span className="text-sm text-gray-400">Lessons</span>
                                 </div>
                             </div>
@@ -85,7 +112,7 @@ export default function StudentSinglePage() {
                             <div className="flex items-center gap-2">
                                 <Image src="/singleClass.png" alt="" width={24} height={24} className="w-6 h-6"/>
                                 <div>
-                                    <h1 className="text-xl font-semibold">6A</h1>
+                                    <h1 className="text-xl font-semibold">{student.class.name}</h1>
                                     <span className="text-sm text-gray-400">Class</span>
                                 </div>
                             </div>
