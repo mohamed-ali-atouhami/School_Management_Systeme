@@ -21,7 +21,20 @@ import { createTeacher, updateTeacher } from "@/lib/Actions"
 import { UploadButton } from "@/lib/uploadthing"
 import Image from "next/image"
 import MultiSelect from "react-select"
-export default function TeacherForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: any }) {
+export default function TeacherForm({ 
+    type, 
+    data, 
+    setOpen, 
+    relatedData 
+}: { 
+    type: "create" | "edit", 
+    data?: TeacherSchema, 
+    setOpen: (open: boolean) => void, 
+    relatedData?: {
+        subjects?: { id: string; name: string }[],
+        classes?: { id: string; name: string }[]
+    } 
+}) {
     const form = useForm<TeacherSchema>({
         resolver: zodResolver(teacherSchema),
         defaultValues: {
@@ -33,49 +46,60 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
             surname: data?.surname || "",
             phone: data?.phone || "",
             address: data?.address || "",
-            bloodType: data?.bloodType || "",
-            sex: data?.sex || "",
-            birthday: data?.birthday || "",
+            bloodType: data?.bloodType || undefined,
+            sex: data?.sex || undefined,
+            birthday: data?.birthday || undefined,
             image: data?.image || "",
             subjects: data?.subjects?.map((subject: any) => subject.id.toString()) || [],
+            classes: data?.classes?.map((classItem: any) => classItem.id.toString()) || []
         },
     })
+
     const [isPending, startTransition] = useTransition()
-    const [state, formAction] = useActionState(type === "create" ? createTeacher : updateTeacher, { success: false, error: false })
+    const [state, formAction] = useActionState(type === "create" ? createTeacher : updateTeacher, { 
+        success: false, 
+        error: false 
+    })
     const router = useRouter()
     const [isSubmitting, setIsSubmitting] = useState(false)
+
     useEffect(() => {
         if (state?.success === true) {
             toast.success(`Teacher ${type === "create" ? "created" : "updated"} successfully!`)
-            form.reset()
             setOpen(false)
             router.refresh()
         } else if (state?.error) {
             toast.error(`Failed to ${type === "create" ? "create" : "update"} teacher: ${state.error}`)
             console.error("Form action error:", state.error)
         }
-    }, [state, type, form, router, setOpen])
+    }, [state, type, router, setOpen])
 
-    function onSubmit(values: TeacherSchema) {
+    async function onSubmit(values: TeacherSchema) {
         if (isSubmitting) return;
         
         setIsSubmitting(true);
-        startTransition(() => {
-            try {
+        try {
+            startTransition(() => {
                 formAction(values);
-            } catch (error) {
-                console.error("Form submission error:", error);
-                toast.error("An unexpected error occurred");
-            } finally {
-                setIsSubmitting(false);
-            }
-        });
+            });
+        } catch (error) {
+            console.error("Form submission error:", error);
+            toast.error("An unexpected error occurred");
+        } finally {
+            setIsSubmitting(false);
+        }
     }
+
     const subjects = relatedData?.subjects || []
-    // Transform teacher options for react-select
-    const subjectOptions = subjects.map((subject: {id: string, name: string}) => ({
+    const subjectOptions = subjects.map((subject) => ({
         value: subject.id.toString(),
         label: subject.name
+    }))
+
+    const classes = relatedData?.classes || []
+    const classOptions = classes.map((classItem) => ({
+        value: classItem.id.toString(),
+        label: classItem.name
     }))
 
     return (
@@ -175,7 +199,35 @@ export default function TeacherForm({ type, data, setOpen, relatedData }: { type
                                             isMulti
                                             className="basic-multi-select"
                                             classNamePrefix="select"
-                                            placeholder="Subjects"
+                                            placeholder="subjects"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        
+                    </div>
+                    <div className="flex flex-col gap-2 w-full md:w-1/4">
+                        <FormField
+                            control={form.control}
+                            name="classes"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Classes</FormLabel>
+                                    <FormControl>
+                                        <MultiSelect
+                                            options={classOptions}
+                                            value={classOptions.filter((option: any) => 
+                                                field.value?.includes(option.value)
+                                            )}
+                                            onChange={(newValue: any) => {
+                                                field.onChange(newValue.map((v: any) => v.value))
+                                            }}
+                                            isMulti
+                                            className="basic-multi-select"
+                                            classNamePrefix="select"
+                                            placeholder="classes"
                                         />
                                     </FormControl>
                                     <FormMessage />

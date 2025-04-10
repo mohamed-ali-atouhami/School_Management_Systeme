@@ -43,6 +43,7 @@ export const teacherSchema = z.object({
   birthday: z.coerce.date({ message: "Birthday is required!" }),
   sex: z.enum(["MALE", "FEMALE"], { message: "Sex is required!" }),
   subjects: z.array(z.string()).optional(), // subject ids
+  classes: z.array(z.string()).optional(), // class ids
 });
 
 export type TeacherSchema = z.infer<typeof teacherSchema>;
@@ -68,7 +69,7 @@ export const studentSchema = z.object({
   phone: z.string().optional(),
   address: z.string(),
   image: z.string().optional(),
-  bloodType: z.string().min(1, { message: "Blood Type is required!" }),
+  bloodType: z.enum(["A_PLUS", "A_MINUS", "B_PLUS", "B_MINUS", "AB_PLUS", "AB_MINUS", "O_PLUS", "O_MINUS"], { message: "Blood Type is required!" }),
   birthday: z.coerce.date({ message: "Birthday is required!" }),
   sex: z.enum(["MALE", "FEMALE"], { message: "Sex is required!" }),
   gradeId: z.coerce.number().min(1, { message: "Grade is required!" }),
