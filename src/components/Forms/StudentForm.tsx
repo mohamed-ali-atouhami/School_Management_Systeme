@@ -2,13 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
-
 import { Button } from "@/components/ui/button"
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -18,65 +15,108 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectValue, SelectTrigger, SelectItem } from "@/components/ui/select"
 import InputFields from "../InputFields"
 import Image from "next/image"
+import { studentSchema, StudentSchema } from "@/lib/FormValidationSchema"
+import { UploadButton } from "@/lib/uploadthing"
+import { toast } from "sonner"
+import { useActionState, useEffect, useState, useTransition } from "react"
+import { createStudent, updateStudent } from "@/lib/Actions"
+import { useRouter } from "next/navigation"
 
 
-const formSchema = z.object({
-    username: z.string().min(3, { message: "must be at least 3 characters." })
-        .max(20, { message: "must be less than 20 characters." }),
-    email: z.string().email({ message: "Invalid email address." }),
-    password: z.string().min(8, { message: "  must be at least 8 characters." })
-        .max(20, { message: " must be less than 20 characters." }),
-    firstName: z.string().min(3, { message: "must be at least 3 characters." })
-        .max(20, { message: "must be less than 20 characters." }),
-    lastName: z.string().min(3, { message: "must be at least 3 characters." })
-        .max(20, { message: "must be less than 20 characters." }),
-    phone: z.string().min(10, { message: "must be at least 10 digits." })
-        .max(15, { message: "must be less than 15 digits." }),
-    bloodType: z.enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"], { message: "Invalid blood type." }),
-    address: z.string().min(3, { message: "must be at least 3 characters." })
-        .max(50, { message: "must be less than 50 characters." }),
-    birthDate: z.date({ message: "Invalid birth date." }),
-    sex: z.enum(["male", "female"], { message: "Invalid sex." }),
-    image: z.instanceof(File, { message: "Invalid image." }),
-})
-
-export default function StudentForm({ type, data, setOpen }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void }) {
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+export default function StudentForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: { classes?: { id: number; name: string }[], grades?: { id: number; level: string }[], parents?: { id: string; name: string; surname: string }[] } }) {
+    const form = useForm<StudentSchema>({
+        resolver: zodResolver(studentSchema),
         defaultValues: {
-            username: "",
-            email: "",
-            password: "",
-            firstName: "",
-            lastName: "",
-            phone: "",
-            address: "",
-            birthDate: new Date(),
-            sex: "male",
-            image: undefined,
+            id: data?.id || "",
+            username: data?.username || "",
+            email: data?.email || "",
+            password: data?.password || "",
+            name: data?.name || "",
+            surname: data?.surname || "",
+            phone: data?.phone || "",
+            address: data?.address || "",
+            bloodType: data?.bloodType || undefined,
+            sex: data?.sex || undefined,
+            birthday: data?.birthday || undefined,
+            image: data?.image || "",
+            gradeId: data?.gradeId || 0,
+            classId: data?.classId || undefined,
+            parentId: data?.parentId || "",
         },
     })
+    const [isPending, startTransition] = useTransition()
+    const [state, formAction] = useActionState(type === "create" ? createStudent : updateStudent, {
+        success: false,
+        error: false
+    })
+    const router = useRouter()
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    useEffect(() => {
+        if (state?.success === true) {
+            toast.success(`Student ${type === "create" ? "created" : "updated"} successfully!`)
+            setOpen(false)
+            router.refresh()
+        } else if (state?.error) {
+            toast.error(`Failed to ${type === "create" ? "create" : "update"} student: ${state.error}`)
+            console.error("Form action error:", state.error)
+        }
+    }, [state, type, router, setOpen])
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: StudentSchema) {
+        if (isSubmitting) return;
 
-        console.log(values)
+        setIsSubmitting(true);
+        try {
+            startTransition(() => {
+                formAction(values);
+            });
+        } catch (error) {
+            console.error("Form submission error:", error);
+            toast.error("An unexpected error occurred");
+        } finally {
+            setIsSubmitting(false);
+        }
     }
+    const classes = relatedData?.classes || []
+    const grades = relatedData?.grades || []
+    const parents = relatedData?.parents || []
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-8">
-                {/* <h1 className="text-2xl font-semibold">Student Form</h1> */}
                 <span className="text-xs text-gray-400 font-medium">Authentication Credentials</span>
                 <div className="flex justify-between flex-wrap gap-4">
-                    <InputFields type="text" label="Username" placeholder="username" control={form.control} name="username" defaultValue={data?.username} />
-                    <InputFields type="email" label="Email" placeholder="email" control={form.control} name="email" defaultValue={data?.email} />
-                    <InputFields type="password" label="Password" placeholder="password" control={form.control} name="password" defaultValue={data?.password} />
+                    <InputFields type="text" label="Username" placeholder="username" control={form.control} name="username" />
+                    {data && <InputFields type="text" label="Id" control={form.control} name="id" hidden />}
+                    <InputFields type="email" label="Email" placeholder="email" control={form.control} name="email" />
+                    <InputFields type="password" label="Password" placeholder="password" control={form.control} name="password" />
                 </div>
                 <span className="text-xs text-gray-400  font-medium">Personal Information</span>
                 <div className="flex justify-between flex-wrap gap-4">
-                    <InputFields type="text" label="First Name" placeholder="first name" control={form.control} name="firstName" defaultValue={data?.firstName} />
-                    <InputFields type="text" label="Last Name" placeholder="last name" control={form.control} name="lastName" defaultValue={data?.lastName} />
-                    <InputFields type="text" label="Phone" placeholder="phone" control={form.control} name="phone" defaultValue={data?.phone} />
-                    <InputFields type="text" label="Address" placeholder="address" control={form.control} name="address" defaultValue={data?.address} />
+                    <InputFields type="text" label="Name" placeholder="name" control={form.control} name="name" />
+                    <InputFields type="text" label="Surname" placeholder="surname" control={form.control} name="surname" />
+                    <InputFields type="tel" label="Phone" placeholder="phone" control={form.control} name="phone" />
+                    <InputFields type="text" label="Address" placeholder="address" control={form.control} name="address" />
+                    <FormField
+                        control={form.control}
+                        name="sex"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Sex</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={data?.sex}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select sex" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="MALE">Male</SelectItem>
+                                        <SelectItem value="FEMALE">Female</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                     <FormField
                         control={form.control}
                         name="bloodType"
@@ -86,11 +126,11 @@ export default function StudentForm({ type, data, setOpen }: { type: "create" | 
                                 <Select onValueChange={field.onChange} defaultValue={data?.bloodType}>
                                     <FormControl>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select blood type" />
+                                            <SelectValue placeholder="Select blood" />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((type, index) => (
+                                        {["A_PLUS", "A_MINUS", "B_PLUS", "B_MINUS", "AB_PLUS", "AB_MINUS", "O_PLUS", "O_MINUS"].map((type, index) => (
                                             <SelectItem key={index} value={type}>
                                                 {type}
                                             </SelectItem>
@@ -102,41 +142,41 @@ export default function StudentForm({ type, data, setOpen }: { type: "create" | 
                         )}
                     />
                     <FormField
-                            control={form.control}
-                            name="birthDate"
-                            render={({ field: { onChange, ...field } }) => (
-                                <FormItem>
-                                    <FormLabel>
-                                        Birth Date
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="date"
-                                            onChange={onChange}
-                                            //value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                                            defaultValue={data?.birthDate ? new Date(data?.birthDate).toISOString().split('T')[0] : ''}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    <div className="flex flex-col gap-2 w-full md:w-1/4">
+                        control={form.control}
+                        name="birthday"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Birth Date</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="date"
+                                        {...field}
+                                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <div className="flex justify-between flex-wrap gap-4">
                         <FormField
                             control={form.control}
-                            name="sex"
+                            name="classId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Sex</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={data?.sex}>
+                                    <FormLabel>Class</FormLabel>
+                                    <Select onValueChange={(value) => field.onChange(value)} defaultValue={data?.classId}>
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select sex" />
+                                                <SelectValue placeholder="Select class" />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="male">Male</SelectItem>
-                                            <SelectItem value="female">Female</SelectItem>
+                                            {classes.map((clss: { id: number, name: string }, index: number) => (
+                                                <SelectItem key={index} value={clss.id.toString()}>
+                                                    {clss.name}
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
@@ -144,37 +184,100 @@ export default function StudentForm({ type, data, setOpen }: { type: "create" | 
                             )}
                         />
                     </div>
-                    <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
+                    <div className="flex justify-between flex-wrap gap-4">
                         <FormField
                             control={form.control}
-                            name="image"
-                            render={({ field: { onChange, ...field } }) => (
+                            name="gradeId"
+                            render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel htmlFor="image" className="text-xs text-gray-400 flex items-center gap-2 cursor-pointer">
-                                        <Image src="/upload.png" alt="upload" width={28} height={28} />
-                                        <span>Upload Image</span>
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            id="image"
-                                            className="hidden"
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                if (file) {
-                                                    onChange(file);
-                                                }
-                                            }}
-                                        />
-                                    </FormControl>
+                                    <FormLabel>Grade</FormLabel>
+                                    <Select onValueChange={(value) => field.onChange(value)} defaultValue={data?.gradeId}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select grade" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {grades.map((grade: { id: number, level: string }, index: number) => (
+                                                <SelectItem key={index} value={grade.id.toString()}>
+                                                    {grade.level}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    <div className="flex justify-between flex-wrap gap-4">
+                        <FormField
+                            control={form.control}
+                            name="parentId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Parent</FormLabel>
+                                    <Select onValueChange={(value) => field.onChange(value)} defaultValue={data?.gradeId}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select parent" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {parents.map((parent: { id: string, name: string, surname: string }, index: number) => (
+                                                <SelectItem key={index} value={parent.id}>
+                                                    {parent.name} {parent.surname}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
                     </div>
                 </div>
-                <Button type="submit">{type === "create" ? "Create" : "Update"}</Button>
+
+                <FormField
+                    control={form.control}
+                    name="image"
+                    render={({ field: { value, onChange, ...field } }) => (
+                        <FormItem>
+                            <FormLabel>Image</FormLabel>
+                            <FormControl>
+                                <div className="space-y-4">
+                                    <UploadButton
+                                        endpoint="imageUploader"
+                                        onClientUploadComplete={(res) => {
+                                            if (res?.[0]) {
+                                                onChange(res[0].url);
+                                                //console.log(res[0].url)
+                                                toast.success("Image uploaded successfully!");
+                                            }
+                                        }}
+                                        onUploadError={(error: Error) => {
+                                            toast.error(`Upload failed: ${error.message}`);
+                                        }}
+                                    />
+                                    {value && (
+                                        <div className="relative w-20 h-20">
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <Image
+                                                    src={value}
+                                                    alt="Preview"
+                                                    fill
+                                                    className="object-cover rounded-md"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <Button type="submit" disabled={isPending}>{isPending ? type === "create" ? "Creating..." : "Updating..." : type === "create" ? "Create" : "Update"}</Button>
             </form>
         </Form>
     )

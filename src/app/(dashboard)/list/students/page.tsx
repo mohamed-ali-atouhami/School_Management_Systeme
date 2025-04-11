@@ -3,11 +3,11 @@ import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import Link from "next/link";
-import FormModal from "@/components/FormModal";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Attendance, Grade, Class, Parent, Prisma, Result, Student } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
+import FormContainer from "@/components/Forms/FormContainer";
 type Students = Student & {
     attendances: Attendance[];
     results: Result[];
@@ -74,7 +74,7 @@ const renderRow = (role?: string) => (student: Students) => {
                         </button>
                     </Link>
                     {role === "admin" &&
-                        <FormModal table="students" type="delete" id={student.id} />
+                        <FormContainer table="students" type="delete" id={student.id} />
                     }
                 </div>
             </td>
@@ -139,6 +139,9 @@ export default async function StudentsListPage({ searchParams }: { searchParams:
             },
             take: ITEMS_PER_PAGE,
             skip: (pageNumber - 1) * ITEMS_PER_PAGE,
+            orderBy: {
+                createdAt: "desc"
+            }
         }),
         prisma.student.count({
             where: query,
@@ -159,7 +162,7 @@ export default async function StudentsListPage({ searchParams }: { searchParams:
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
                         {role === "admin" &&
-                            <FormModal table="students" type="create" />
+                            <FormContainer table="students" type="create" />
                         }
                     </div>
                 </div>

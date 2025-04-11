@@ -3,6 +3,7 @@
 import { clerkClient } from "@clerk/nextjs/server"
 import { SubjectSchema, ClassSchema, TeacherSchema, StudentSchema } from "./FormValidationSchema"
 import prisma from "./prisma"
+//import { UTApi } from "uploadthing/server"
 type CurrentState = {
     success: boolean,
     error: boolean | string
@@ -338,6 +339,14 @@ export async function createStudent(currentState: CurrentState, formData: Studen
     }
 
     try {
+        const classItem = await prisma.class.findUnique({
+            where: { id: formData.classId },
+            include: { _count: { select: { students: true } } }
+        })
+        if (classItem && classItem.capacity === classItem._count.students) {
+            return { success: false, error: 'Class is full' }
+        }
+        
         const clerk = await clerkClient()
         
         // Create user in Clerk
@@ -371,7 +380,7 @@ export async function createStudent(currentState: CurrentState, formData: Studen
             return { success: false, error: 'Failed to set user role' }
         }
 
-        // Create teacher in database
+        // Create studen in database
         try {
             const studentData = {
                 id: user.id,
@@ -491,6 +500,21 @@ export async function deleteStudent(formData: FormData) {
             // Then try to delete from Clerk
             const clerk = await clerkClient()
             await clerk.users.deleteUser(String(id))
+            
+            // Delete image from UploadThing if it exists
+            // const imageDataStr = formData.get("image") as string
+            // if (imageDataStr) {
+            //     try {
+            //         const imageData = JSON.parse(imageDataStr)
+            //         if (imageData.key) {
+            //             const utapi = new UTApi()
+            //             await utapi.deleteFiles([imageData.key])
+            //             console.log("Successfully deleted image with key:", imageData.key)
+            //         }
+            //     } catch (e) {
+            //         console.error('Error parsing image data:', e)
+            //     }
+            // }
         } catch (clerkError) {
             // Log Clerk deletion error but don't fail the operation
             console.error('Error deleting Clerk user:', clerkError)
