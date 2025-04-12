@@ -10,8 +10,24 @@ export type FormContainerProps = {
 }
 
 export default async function FormContainer({ table, type, data, id, relatedData }: FormContainerProps) {
-    if(type !== "delete") {
-        switch(table) {
+    if (type === "delete" && (table === "students" || table === "teachers") && id) {
+        // Fetch student data for deletion
+        const studentData = await prisma.student.findUnique({
+            where: { id: String(id) },
+            select: {
+                image: true
+            }
+        });
+        const teacherData = await prisma.teacher.findUnique({
+            where: { id: String(id) },
+            select: {
+                image: true
+            }
+        });
+
+        data = studentData || teacherData;
+    } else if (type !== "delete") {
+        switch (table) {
             case "subjects":
                 const subjectsTeachers = await prisma.teacher.findMany({
                     select: {
@@ -29,7 +45,7 @@ export default async function FormContainer({ table, type, data, id, relatedData
                     select: {
                         id: true,
                         name: true,
-                        surname: true   
+                        surname: true
                     }
                 })
                 const classesGrades = await prisma.grade.findMany({
@@ -86,7 +102,7 @@ export default async function FormContainer({ table, type, data, id, relatedData
                     grades: studentsGrades,
                     parents: studentsParents
                 }
-                break    
+                break
         }
     }
     return (

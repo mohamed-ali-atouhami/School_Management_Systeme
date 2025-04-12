@@ -1,5 +1,4 @@
 "use client"
-
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
@@ -21,7 +20,6 @@ import { toast } from "sonner"
 import { useActionState, useEffect, useState, useTransition } from "react"
 import { createStudent, updateStudent } from "@/lib/Actions"
 import { useRouter } from "next/navigation"
-
 
 export default function StudentForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: { classes?: { id: number; name: string }[], grades?: { id: number; level: string }[], parents?: { id: string; name: string; surname: string }[] } }) {
     const form = useForm<StudentSchema>({
@@ -51,6 +49,7 @@ export default function StudentForm({ type, data, setOpen, relatedData }: { type
     })
     const router = useRouter()
     const [isSubmitting, setIsSubmitting] = useState(false)
+
     useEffect(() => {
         if (state?.success === true) {
             toast.success(`Student ${type === "create" ? "created" : "updated"} successfully!`)
@@ -165,7 +164,7 @@ export default function StudentForm({ type, data, setOpen, relatedData }: { type
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Class</FormLabel>
-                                    <Select onValueChange={(value) => field.onChange(value)} defaultValue={data?.classId}>
+                                    <Select onValueChange={(value) => field.onChange(value)} defaultValue={data?.classId?.toString()}>
                                         <FormControl>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select class" />
@@ -191,7 +190,7 @@ export default function StudentForm({ type, data, setOpen, relatedData }: { type
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Grade</FormLabel>
-                                    <Select onValueChange={(value) => field.onChange(value)} defaultValue={data?.gradeId}>
+                                    <Select onValueChange={(value) => field.onChange(value)} defaultValue={data?.gradeId?.toString()}>
                                         <FormControl>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select grade" />
@@ -217,7 +216,7 @@ export default function StudentForm({ type, data, setOpen, relatedData }: { type
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Parent</FormLabel>
-                                    <Select onValueChange={(value) => field.onChange(value)} defaultValue={data?.gradeId}>
+                                    <Select onValueChange={(value) => field.onChange(value)} defaultValue={data?.parentId}>
                                         <FormControl>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select parent" />
@@ -236,47 +235,48 @@ export default function StudentForm({ type, data, setOpen, relatedData }: { type
                             )}
                         />
                     </div>
+                    <FormField
+                        control={form.control}
+                        name="image"
+                        render={({ field: { value, onChange, ...field } }) => (
+                            <FormItem>
+                                <FormLabel>Image</FormLabel>
+                                <FormControl>
+                                    <div className="space-y-4">
+                                        <UploadButton
+                                            endpoint="imageUploader"
+                                            onClientUploadComplete={(res) => {
+                                                console.log(res)
+                                                if (res?.[0]) {
+                                                    onChange(res[0].url);
+                                                    toast.success("Image uploaded successfully!");
+                                                }
+                                            }}
+                                            onUploadError={(error: Error) => {
+                                                toast.error(`Upload failed: ${error.message}`);
+                                            }}
+                                        />
+                                        {value && (
+                                            <div className="relative w-20 h-20">
+                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                    <Image
+                                                        src={value}
+                                                        alt="Preview"
+                                                        fill
+                                                        className="object-cover rounded-md"
+                                                        unoptimized
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </div>
 
-                <FormField
-                    control={form.control}
-                    name="image"
-                    render={({ field: { value, onChange, ...field } }) => (
-                        <FormItem>
-                            <FormLabel>Image</FormLabel>
-                            <FormControl>
-                                <div className="space-y-4">
-                                    <UploadButton
-                                        endpoint="imageUploader"
-                                        onClientUploadComplete={(res) => {
-                                            if (res?.[0]) {
-                                                onChange(res[0].url);
-                                                //console.log(res[0].url)
-                                                toast.success("Image uploaded successfully!");
-                                            }
-                                        }}
-                                        onUploadError={(error: Error) => {
-                                            toast.error(`Upload failed: ${error.message}`);
-                                        }}
-                                    />
-                                    {value && (
-                                        <div className="relative w-20 h-20">
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <Image
-                                                    src={value}
-                                                    alt="Preview"
-                                                    fill
-                                                    className="object-cover rounded-md"
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
                 <Button type="submit" disabled={isPending}>{isPending ? type === "create" ? "Creating..." : "Updating..." : type === "create" ? "Create" : "Update"}</Button>
             </form>
         </Form>

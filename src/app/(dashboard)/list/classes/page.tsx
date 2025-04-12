@@ -41,11 +41,11 @@ const renderRow = (role?: string) => (classes: Classes) => {
     return (
         <tr key={classes.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
             <td className="flex items-center gap-4 p-4">
-                {classes.name}
+                {classes?.name}
             </td>
-            <td className="hidden md:table-cell">{classes.capacity}</td>
-            <td className="hidden md:table-cell">{classes.grade.level}</td>
-            <td className="hidden md:table-cell">{classes.supervisor.name}</td>
+            <td className="hidden md:table-cell">{classes?.capacity}</td>
+            <td className="hidden md:table-cell">{classes?.grade?.level}</td>
+            <td className="hidden md:table-cell">{classes?.supervisor?.name}</td>
             <td>
                 <div className="flex items-center gap-2">
                     {role === "admin" &&

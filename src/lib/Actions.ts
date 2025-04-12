@@ -3,7 +3,7 @@
 import { clerkClient } from "@clerk/nextjs/server"
 import { SubjectSchema, ClassSchema, TeacherSchema, StudentSchema } from "./FormValidationSchema"
 import prisma from "./prisma"
-//import { UTApi } from "uploadthing/server"
+import { UTApi } from "uploadthing/server"
 type CurrentState = {
     success: boolean,
     error: boolean | string
@@ -141,7 +141,7 @@ export async function createTeacher(currentState: CurrentState, formData: Teache
 
     try {
         const clerk = await clerkClient()
-        
+
         // Create user in Clerk
         let user;
         try {
@@ -153,11 +153,13 @@ export async function createTeacher(currentState: CurrentState, formData: Teache
             })
         } catch (clerkError) {
             console.error('Clerk user creation failed:', clerkError)
+            await deleteImageFromUploadThing(formData.image, "Clerk creation failure")
             return { success: false, error: 'Failed to create user authentication' }
         }
 
         if (!user || !user.id) {
             console.error('Clerk user creation succeeded but no user ID returned')
+            await deleteImageFromUploadThing(formData.image, "invalid Clerk response")
             return { success: false, error: 'Invalid user creation response' }
         }
 
@@ -168,8 +170,9 @@ export async function createTeacher(currentState: CurrentState, formData: Teache
             })
         } catch (metadataError) {
             console.error('Failed to update user metadata:', metadataError)
-            // Clean up the created user
+            // Clean up the created user in Clerk
             await clerk.users.deleteUser(user.id)
+            await deleteImageFromUploadThing(formData.image, "metadata update failure")
             return { success: false, error: 'Failed to set user role' }
         }
 
@@ -188,13 +191,13 @@ export async function createTeacher(currentState: CurrentState, formData: Teache
                 birthday: formData.birthday,
                 image: formData.image || '',
                 subjects: {
-                    connect: formData.subjects?.map((subjectId: string) => ({ 
-                        id: parseInt(subjectId) 
+                    connect: formData.subjects?.map((subjectId: string) => ({
+                        id: parseInt(subjectId)
                     })) || []
                 },
                 classes: {
-                    connect: formData.classes?.map((classId: string) => ({ 
-                        id: parseInt(classId) 
+                    connect: formData.classes?.map((classId: string) => ({
+                        id: parseInt(classId)
                     })) || []
                 }
             }
@@ -213,12 +216,14 @@ export async function createTeacher(currentState: CurrentState, formData: Teache
             console.error('Database creation failed:', dbError)
             // Clean up the created user in Clerk
             await clerk.users.deleteUser(user.id)
+            await deleteImageFromUploadThing(formData.image, "database creation failure")
             return { success: false, error: 'Failed to create teacher record' }
         }
 
         return { success: true, error: false }
     } catch (error) {
         console.error('Unexpected error creating teacher:', error)
+        await deleteImageFromUploadThing(formData.image, "unexpected error")
         return { success: false, error: 'An unexpected error occurred' }
     }
 }
@@ -228,6 +233,12 @@ export async function updateTeacher(currentState: CurrentState, formData: Teache
         return { success: false, error: 'Invalid form data' }
     }
     try {
+        // First get the current teacher data to check if image has changed
+        const currentTeacher = await prisma.teacher.findUnique({
+            where: { id: formData.id },
+            select: { image: true }
+        });
+
         const clerk = await clerkClient()
         let user;
         if (!formData.id) {
@@ -236,8 +247,7 @@ export async function updateTeacher(currentState: CurrentState, formData: Teache
         try {
             user = await clerk.users.updateUser(formData.id, {
                 username: formData.username,
-                //password: formData.password,
-                ...(formData.password !=="" && {password: formData.password}),
+                ...(formData.password !== "" && { password: formData.password }),
                 firstName: formData.name,
                 lastName: formData.surname,
             })
@@ -254,7 +264,7 @@ export async function updateTeacher(currentState: CurrentState, formData: Teache
             const updatedTeacher = await prisma.teacher.update({
                 where: { id: formData.id },
                 data: {
-                    ...(formData.password !=="" && {password: formData.password}),
+                    ...(formData.password !== "" && { password: formData.password }),
                     username: formData.username,
                     name: formData.name,
                     surname: formData.surname,
@@ -266,13 +276,13 @@ export async function updateTeacher(currentState: CurrentState, formData: Teache
                     birthday: formData.birthday,
                     image: formData.image || '',
                     subjects: {
-                        connect: formData.subjects?.map((subjectId: string) => ({ 
-                            id: parseInt(subjectId) 
+                        connect: formData.subjects?.map((subjectId: string) => ({
+                            id: parseInt(subjectId)
                         })) || []
                     },
                     classes: {
-                        connect: formData.classes?.map((classId: string) => ({ 
-                            id: parseInt(classId) 
+                        connect: formData.classes?.map((classId: string) => ({
+                            id: parseInt(classId)
                         })) || []
                     }
                 }
@@ -280,6 +290,11 @@ export async function updateTeacher(currentState: CurrentState, formData: Teache
 
             if (!updatedTeacher) {
                 throw new Error('Teacher update returned null')
+            }
+
+            // Delete old image from UploadThing if it exists and has changed
+            if (currentTeacher?.image && currentTeacher.image !== formData.image) {
+                await deleteImageFromUploadThing(currentTeacher.image, "image update")
             }
 
         } catch (dbError) {
@@ -296,27 +311,45 @@ export async function updateTeacher(currentState: CurrentState, formData: Teache
     }
 }
 export async function deleteTeacher(formData: FormData) {
-    const id = formData.get("id")
+    const id = formData.get("id");
+    const imageUrl = formData.get("image") as string;
+
     try {
-        // Delete from Prisma first
+        // Delete from Prisma
         await prisma.teacher.delete({
             where: { id: String(id) },
-        })
-        
+        });
+
+        // Delete from Clerk
         try {
-            // Then try to delete from Clerk
-            const clerk = await clerkClient()
-            await clerk.users.deleteUser(String(id))
+            const clerk = await clerkClient();
+            await clerk.users.deleteUser(String(id));
         } catch (clerkError) {
-            // Log Clerk deletion error but don't fail the operation
-            console.error('Error deleting Clerk user:', clerkError)
-            // Optionally, you could add a cleanup or notification system here
+            console.error("Error deleting Clerk user:", clerkError);
         }
-        
-        return true
+
+        // Delete image from UploadThing
+        await deleteImageFromUploadThing(imageUrl, "teacher deletion");
+
+        return true;
     } catch (error) {
-        console.error('Error deleting teacher from database:', error)
-        return false
+        console.error("Error deleting teacher from database:", error);
+        return false;
+    }
+}
+// Helper function to delete image from UploadThing
+async function deleteImageFromUploadThing(imageUrl: string | undefined, context: string) {
+    if (!imageUrl) return;
+
+    const fileKey = imageUrl.split("/f/")[1];
+    if (!fileKey) return;
+
+    const utapi = new UTApi();
+    try {
+        await utapi.deleteFiles(fileKey);
+        console.log(`Successfully deleted image after ${context}:`, fileKey);
+    } catch (e) {
+        console.error(`Error deleting image after ${context}:`, e);
     }
 }
 // Student Actions
@@ -346,9 +379,9 @@ export async function createStudent(currentState: CurrentState, formData: Studen
         if (classItem && classItem.capacity === classItem._count.students) {
             return { success: false, error: 'Class is full' }
         }
-        
+
         const clerk = await clerkClient()
-        
+
         // Create user in Clerk
         let user;
         try {
@@ -360,11 +393,13 @@ export async function createStudent(currentState: CurrentState, formData: Studen
             })
         } catch (clerkError) {
             console.error('Clerk user creation failed:', clerkError)
+            await deleteImageFromUploadThing(formData.image, "Clerk creation failure")
             return { success: false, error: 'Failed to create user authentication' }
         }
 
         if (!user || !user.id) {
             console.error('Clerk user creation succeeded but no user ID returned')
+            await deleteImageFromUploadThing(formData.image, "invalid Clerk response")
             return { success: false, error: 'Invalid user creation response' }
         }
 
@@ -375,12 +410,12 @@ export async function createStudent(currentState: CurrentState, formData: Studen
             })
         } catch (metadataError) {
             console.error('Failed to update user metadata:', metadataError)
-            // Clean up the created user
+            // Clean up the created user in Clerk
             await clerk.users.deleteUser(user.id)
+            await deleteImageFromUploadThing(formData.image, "metadata update failure")
             return { success: false, error: 'Failed to set user role' }
         }
-
-        // Create studen in database
+        // Create student in database
         try {
             const studentData = {
                 id: user.id,
@@ -413,12 +448,14 @@ export async function createStudent(currentState: CurrentState, formData: Studen
             console.error('Database creation failed:', dbError)
             // Clean up the created user in Clerk
             await clerk.users.deleteUser(user.id)
+            await deleteImageFromUploadThing(formData.image, "database creation failure")
             return { success: false, error: 'Failed to create student record' }
         }
 
         return { success: true, error: false }
     } catch (error) {
         console.error('Unexpected error creating student:', error)
+        await deleteImageFromUploadThing(formData.image, "unexpected error")
         return { success: false, error: 'An unexpected error occurred' }
     }
 }
@@ -428,6 +465,12 @@ export async function updateStudent(currentState: CurrentState, formData: Studen
         return { success: false, error: 'Invalid form data' }
     }
     try {
+        // First get the current student data to check if image has changed
+        const currentStudent = await prisma.student.findUnique({
+            where: { id: formData.id },
+            select: { image: true }
+        });
+
         const clerk = await clerkClient()
         let user;
         if (!formData.id) {
@@ -436,8 +479,7 @@ export async function updateStudent(currentState: CurrentState, formData: Studen
         try {
             user = await clerk.users.updateUser(formData.id, {
                 username: formData.username,
-                //password: formData.password,
-                ...(formData.password !=="" && {password: formData.password}),
+                ...(formData.password !== "" && { password: formData.password }),
                 firstName: formData.name,
                 lastName: formData.surname,
             })
@@ -454,7 +496,7 @@ export async function updateStudent(currentState: CurrentState, formData: Studen
             const updatedStudent = await prisma.student.update({
                 where: { id: formData.id },
                 data: {
-                    ...(formData.password !=="" && {password: formData.password}),
+                    ...(formData.password !== "" && { password: formData.password }),
                     username: formData.username,
                     name: formData.name,
                     surname: formData.surname,
@@ -475,6 +517,11 @@ export async function updateStudent(currentState: CurrentState, formData: Studen
                 throw new Error('Student update returned null')
             }
 
+            // Delete old image from UploadThing if it exists and has changed
+            if (currentStudent?.image && currentStudent.image !== formData.image) {
+                await deleteImageFromUploadThing(currentStudent.image, "image update")
+            }
+
         } catch (dbError) {
             console.error('Database update failed:', dbError)
             // Clean up the created user in Clerk
@@ -489,41 +536,30 @@ export async function updateStudent(currentState: CurrentState, formData: Studen
     }
 }
 export async function deleteStudent(formData: FormData) {
-    const id = formData.get("id")
+    const id = formData.get("id");
+    const imageUrl = formData.get("image") as string;
+    console.log("this is the image url", imageUrl)
+
     try {
-        // Delete from Prisma first
+        // Delete from Prisma
         await prisma.student.delete({
             where: { id: String(id) },
-        })
-        
+        });
+
+        // Delete from Clerk
         try {
-            // Then try to delete from Clerk
-            const clerk = await clerkClient()
-            await clerk.users.deleteUser(String(id))
-            
-            // Delete image from UploadThing if it exists
-            // const imageDataStr = formData.get("image") as string
-            // if (imageDataStr) {
-            //     try {
-            //         const imageData = JSON.parse(imageDataStr)
-            //         if (imageData.key) {
-            //             const utapi = new UTApi()
-            //             await utapi.deleteFiles([imageData.key])
-            //             console.log("Successfully deleted image with key:", imageData.key)
-            //         }
-            //     } catch (e) {
-            //         console.error('Error parsing image data:', e)
-            //     }
-            // }
+            const clerk = await clerkClient();
+            await clerk.users.deleteUser(String(id));
         } catch (clerkError) {
-            // Log Clerk deletion error but don't fail the operation
-            console.error('Error deleting Clerk user:', clerkError)
-            // Optionally, you could add a cleanup or notification system here
+            console.error("Error deleting Clerk user:", clerkError);
         }
-        
-        return true
+
+        // Delete image from UploadThing
+        await deleteImageFromUploadThing(imageUrl, "student deletion")
+
+        return true;
     } catch (error) {
-        console.error('Error deleting student from database:', error)
-        return false
+        console.error("Error deleting student from database:", error);
+        return false;
     }
 }

@@ -31,7 +31,7 @@ const EventForm = dynamic(() => import("./Forms/EventForm"), { ssr: false, loadi
 const LessonForm = dynamic(() => import("./Forms/LessonForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
 const SubjectForm = dynamic(() => import("./Forms/SubjectForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
 
-const formMap: Record<string, React.ComponentType<{ type: "create" | "edit", data?: any, setOpen: (open: boolean) => void , relatedData?: any}>> = {
+const formMap: Record<string, React.ComponentType<{ type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: any }>> = {
     teachers: TeacherForm,
     students: StudentForm,
     parents: ParentForm,
@@ -63,12 +63,15 @@ export default function FormModal({ table, type, data, id, relatedData }: FormCo
 
     const Form = () => {
         const [isPending, startTransition] = useTransition()
-        const router = useRouter()        
+        const router = useRouter()
 
         const handleDelete = async () => {
             const formData = new FormData()
             formData.append('id', String(id))
-            
+            if (data?.image) {
+                formData.append('image', data.image)
+            }
+
             startTransition(async () => {
                 const deleteAction = deleteMap[table]
                 if (!deleteAction) {
@@ -102,7 +105,7 @@ export default function FormModal({ table, type, data, id, relatedData }: FormCo
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
+                        <AlertDialogAction
                             onClick={handleDelete}
                             disabled={isPending}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -121,10 +124,10 @@ export default function FormModal({ table, type, data, id, relatedData }: FormCo
                         </DialogTitle>
                         <DialogDescription></DialogDescription>
                     </DialogHeader>
-                    {React.createElement(formMap[table], { 
-                        type, 
-                        data, 
-                        setOpen, 
+                    {React.createElement(formMap[table], {
+                        type,
+                        data,
+                        setOpen,
                         relatedData: relatedData // Make sure we're explicitly passing relatedData
                     })}
                 </DialogContent>
