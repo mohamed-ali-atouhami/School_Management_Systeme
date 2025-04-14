@@ -15,7 +15,7 @@ import Image from "next/image"
 import React, { useState, useTransition } from "react"
 import dynamic from "next/dynamic"
 import { Loader } from "lucide-react"
-import { deleteSubject, deleteClass, deleteTeacher, deleteStudent } from "@/lib/Actions"
+import { deleteSubject, deleteClass, deleteTeacher, deleteStudent, deleteExam } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { FormContainerProps } from "./Forms/FormContainer"
@@ -54,6 +54,7 @@ const deleteMap: Partial<Record<"students" | "teachers" | "parents" | "classes" 
     classes: deleteClass,
     teachers: deleteTeacher,
     students: deleteStudent,
+    exams: deleteExam,
 }
 
 export default function FormModal({ table, type, data, id, relatedData }: FormContainerProps & { relatedData?: any }) {

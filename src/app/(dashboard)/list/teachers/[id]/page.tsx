@@ -1,5 +1,4 @@
 import Announcement from "@/components/Announcement";
-import BigCalendar from "@/components/BigCalendar";
 import Image from "next/image";
 import Link from "next/link";
 import { PerformanceChart } from "@/components/PerformanceChart";
@@ -7,6 +6,7 @@ import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import FormContainer from "@/components/Forms/FormContainer";
 import { auth } from "@clerk/nextjs/server";
+import BigCalendarContainer from "@/components/BigCalendarContainer";
 export default async function TeacherSinglePage({params : {id}}: {params: {id: string}}) {
     const {sessionClaims} = await auth()
     const role = (sessionClaims?.metadata as {role?: string})?.role
@@ -125,7 +125,8 @@ export default async function TeacherSinglePage({params : {id}}: {params: {id: s
                 {/* Bottom */}
                 <div className="mt-4 bg-white rounded-md p-4 h-[800px]">
                     <h1 className="text-lg font-semibold">Teacher&apos;s Schedule</h1>
-                    <BigCalendar/>
+                    <BigCalendarContainer type="teacherId" id={teacher.id}/>
+
                 </div>
             </div>
             {/* right */}
@@ -133,11 +134,11 @@ export default async function TeacherSinglePage({params : {id}}: {params: {id: s
                 <div className="bg-white rounded-md p-4">
                     <h1 className="text-xl font-semibold">Shortcuts</h1>
                     <div className="mt-4 flex gap-4 flex-wrap text-xs text-gray-500">
-                        <Link className="p-3 rounded-md bg-medaliSkyLight" href={`/list/classes?supervisorId=${id}`}>Teacher&apos;s Classes</Link>
-                        <Link className="p-3 rounded-md bg-medaliPurpleLight" href={`/list/students?teacherId=${id}`}>Teacher&apos;s Students</Link>
-                        <Link className="p-3 rounded-md bg-medaliYellowLight" href={`/list/exams?teacherId=${id}`}>Teacher&apos;s Exams</Link>
-                        <Link className="p-3 rounded-md bg-pink-50" href={`/list/lessons?teacherId=${id}`}>Teacher&apos;s Lessons</Link>
-                        <Link className="p-3 rounded-md bg-medaliSkyLight" href={`/list/assignments?teacherId=${id}`}>Teacher&apos;s Assignments</Link>
+                        <Link className="p-3 rounded-md bg-medaliSkyLight" href={`/list/classes?supervisorId=${teacher.id}`}>Teacher&apos;s Classes</Link>
+                        <Link className="p-3 rounded-md bg-medaliPurpleLight" href={`/list/students?teacherId=${teacher.id}`}>Teacher&apos;s Students</Link>
+                        <Link className="p-3 rounded-md bg-medaliYellowLight" href={`/list/exams?teacherId=${teacher.id}`}>Teacher&apos;s Exams</Link>
+                        <Link className="p-3 rounded-md bg-pink-50" href={`/list/lessons?teacherId=${teacher.id}`}>Teacher&apos;s Lessons</Link>
+                        <Link className="p-3 rounded-md bg-medaliSkyLight" href={`/list/assignments?teacherId=${teacher.id}`}>Teacher&apos;s Assignments</Link>
                     </div>
                 </div>
                 <PerformanceChart/>

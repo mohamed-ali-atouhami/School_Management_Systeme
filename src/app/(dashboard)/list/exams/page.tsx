@@ -2,11 +2,11 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import FormModal from "@/components/FormModal";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Lesson, Exam, Prisma, Subject, Class, Teacher } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
+import FormContainer from "@/components/Forms/FormContainer";
 type Exams = Exam & {
     lesson: Lesson & {
         subject: Subject;
@@ -53,10 +53,10 @@ const renderRow = (role?: string) => (exam: Exams) => {
             </td>
             <td>
                 <div className="flex items-center gap-2">
-                    {role === "admin" || role === "teacher" && 
+                    {(role === "admin" || role === "teacher") && 
                     <>
-                        <FormModal table="exams" type="edit" data={exam} />
-                        <FormModal table="exams" type="delete" id={exam.id} />
+                        <FormContainer table="exams" type="edit" data={exam} />
+                        <FormContainer table="exams" type="delete" id={exam.id} />
                     </>
                     }
                 </div>
@@ -67,7 +67,7 @@ const renderRow = (role?: string) => (exam: Exams) => {
 
 export default async function ExamsListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
     const { sessionClaims ,userId} = await auth();
-    const role = (sessionClaims?.metadata as { role?: string })?.role;
+    const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
     const currentUserId = userId!;
     const { page, ...queryparams } = searchParams;
     const pageNumber = page ? Number(page) : 1;
@@ -131,6 +131,9 @@ export default async function ExamsListPage({ searchParams }: { searchParams: { 
                     },
                 },
             },
+            orderBy: {
+                createdAt: "desc",
+            },
             take: ITEMS_PER_PAGE,
             skip: (pageNumber - 1) * ITEMS_PER_PAGE,
         }),
@@ -152,9 +155,9 @@ export default async function ExamsListPage({ searchParams }: { searchParams: { 
                         <button className="w-8 h-8 rounded-full bg-medaliYellow flex items-center justify-center">
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
-                        {role === "admin" || role === "teacher" && 
+                        {(role === "admin" || role === "teacher") && 
                         <>
-                            <FormModal table="exams" type="create" />
+                            <FormContainer table="exams" type="create" />
                         </>
                         }
                     </div>

@@ -1,7 +1,7 @@
 "use server"
 
-import { clerkClient } from "@clerk/nextjs/server"
-import { SubjectSchema, ClassSchema, TeacherSchema, StudentSchema } from "./FormValidationSchema"
+import { auth, clerkClient } from "@clerk/nextjs/server"
+import { SubjectSchema, ClassSchema, TeacherSchema, StudentSchema, ExamSchema } from "./FormValidationSchema"
 import prisma from "./prisma"
 import { UTApi } from "uploadthing/server"
 type CurrentState = {
@@ -561,5 +561,93 @@ export async function deleteStudent(formData: FormData) {
     } catch (error) {
         console.error("Error deleting student from database:", error);
         return false;
+    }
+}
+// Exam Actions
+export async function createExam(currentState: CurrentState, formData: ExamSchema) {
+    if (!formData || !formData.title || !formData.lessonId || !formData.startTime || !formData.endTime) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+    const { sessionClaims, userId } = await auth();
+    const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
+    const currentUserId = userId!;
+    try {
+        if (role === "teacher") {
+            const teacherLessons = await prisma.lesson.findFirst({
+                where: {
+                    id: formData.lessonId,
+                    teacherId: currentUserId
+                }
+            })
+            if (!teacherLessons) {
+                return { success: false, error: 'Teacher does not teach this lesson' }
+            }
+        }
+        await prisma.exam.create({
+            data: {
+                title: formData.title,
+                startTime: formData.startTime,
+                endTime: formData.endTime,
+                lessonId: formData.lessonId
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function updateExam(currentState: CurrentState, formData: ExamSchema) {
+    if (!formData || !formData.id || !formData.title || !formData.lessonId || !formData.startTime || !formData.endTime) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+    const { sessionClaims, userId } = await auth();
+    const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
+    const currentUserId = userId!;
+    try {
+        if (role === "teacher") {
+            const teacherLessons = await prisma.lesson.findFirst({
+                where: {
+                    id: formData.lessonId,
+                    teacherId: currentUserId
+                }
+            })
+            if (!teacherLessons) {
+                return { success: false, error: 'Teacher does not teach this lesson' }
+            }
+        }
+        await prisma.exam.update({
+            where: { id: formData.id },
+            data: {
+                title: formData.title,
+                startTime: formData.startTime,
+                endTime: formData.endTime,
+                lessonId: formData.lessonId
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function deleteExam(formData: FormData) {
+    const id = formData.get("id")
+    const { sessionClaims, userId } = await auth();
+    const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
+    const currentUserId = userId!;
+    try {
+        await prisma.exam.delete({
+            where: {
+                id: Number(id),
+                ...(role === "teacher" ? { lesson: { teacherId: currentUserId } } : {})
+            },
+        })
+        return true
+    } catch (error) {
+        console.error(error)
+        return false
     }
 }

@@ -1,5 +1,4 @@
 import Announcement from "@/components/Announcement";
-import BigCalendar from "@/components/BigCalendar";
 import Image from "next/image";
 import Link from "next/link";
 import { PerformanceChart } from "@/components/PerformanceChart";
@@ -7,6 +6,9 @@ import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import FormContainer from "@/components/Forms/FormContainer";
+import { Suspense } from "react";
+import StudentAttendanceCard from "@/components/StudentAttendanceCard";
+import BigCalendarContainer from "@/components/BigCalendarContainer";
 export default async function StudentSinglePage({params : {id}}: {params: {id: string}}) {
     const {sessionClaims} = await auth()
     const role = (sessionClaims?.metadata as {role?: string})?.role
@@ -93,10 +95,9 @@ export default async function StudentSinglePage({params : {id}}: {params: {id: s
                         <div className="bg-white rounded-md p-4 flex gap-4 w-full md:w-[48%] lg:w-[45%] xl:w-[47%] ">
                             <div className="flex items-center gap-2">
                                 <Image src="/singleBranch.png" alt="" width={24} height={24} className="w-6 h-6"/>
-                                <div>
-                                    <h1 className="text-xl font-semibold">90%</h1>
-                                    <span className="text-sm text-gray-400">Attendance</span>
-                                </div>
+                                <Suspense fallback={"Loading..."}>
+                                    <StudentAttendanceCard id={student.id} />
+                                </Suspense>
                             </div>
                         </div>
                         {/* card 3 */}
@@ -124,7 +125,7 @@ export default async function StudentSinglePage({params : {id}}: {params: {id: s
                 {/* Bottom */}
                 <div className="mt-4 bg-white rounded-md p-4 h-[800px]">
                     <h1 className="text-lg font-semibold">Student&apos;s Schedule</h1>
-                    <BigCalendar/>
+                    <BigCalendarContainer type="classId" id={student.class.id}/>
                 </div>
             </div>
             {/* right */}
@@ -132,11 +133,11 @@ export default async function StudentSinglePage({params : {id}}: {params: {id: s
                 <div className="bg-white rounded-md p-4">
                     <h1 className="text-xl font-semibold">Shortcuts</h1>
                     <div className="mt-4 flex gap-2 flex-wrap text-xs text-gray-500">
-                        <Link className="p-3 rounded-md bg-medaliSkyLight" href={`/list/lessons?classId=${2}`}>Student&apos;s Lessons</Link>
-                        <Link className="p-3 rounded-md bg-medaliPurpleLight" href={`/list/teachers?classId=${2}`}>Student&apos;s Teachers</Link>
-                        <Link className="p-3 rounded-md bg-medaliYellowLight" href={`/list/exams?classId=${2}`}>Student&apos;s Exams</Link>
-                        <Link className="p-3 rounded-md bg-medaliSkyLight" href={`/list/assignments?classId=${2}`}>Student&apos;s Assignments</Link>
-                        <Link className="p-3 rounded-md bg-pink-50" href={`/list/results?studentId=${"student1"}`}>Student&apos;s Results</Link>
+                        <Link className="p-3 rounded-md bg-medaliSkyLight" href={`/list/lessons?classId=${student.class.id}`}>Student&apos;s Lessons</Link>
+                        <Link className="p-3 rounded-md bg-medaliPurpleLight" href={`/list/teachers?classId=${student.class.id}`}>Student&apos;s Teachers</Link>
+                        <Link className="p-3 rounded-md bg-medaliYellowLight" href={`/list/exams?classId=${student.class.id}`}>Student&apos;s Exams</Link>
+                        <Link className="p-3 rounded-md bg-medaliSkyLight" href={`/list/assignments?classId=${student.class.id}`}>Student&apos;s Assignments</Link>
+                        <Link className="p-3 rounded-md bg-pink-50" href={`/list/results?studentId=${student.id}`}>Student&apos;s Results</Link>
                     </div>
                 </div>
                 <PerformanceChart/>

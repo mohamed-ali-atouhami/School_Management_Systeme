@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma"
 import FormModal from "../FormModal"
-
+import { auth } from "@clerk/nextjs/server"
 export type FormContainerProps = {
     table: "students" | "teachers" | "parents" | "classes" | "exams" | "assignments" | "results" | "events" | "announcements" | "attendance" | "lessons" | "subjects",
     type: "create" | "edit" | "delete",
@@ -79,9 +79,12 @@ export default async function FormContainer({ table, type, data, id, relatedData
                 break
             case "students":
                 const studentsClasses = await prisma.class.findMany({
-                    select: {
-                        id: true,
-                        name: true
+                    include: {
+                        _count: {
+                            select: {
+                                students: true
+                            }
+                        }
                     }
                 })
                 const studentsGrades = await prisma.grade.findMany({
@@ -101,6 +104,23 @@ export default async function FormContainer({ table, type, data, id, relatedData
                     classes: studentsClasses,
                     grades: studentsGrades,
                     parents: studentsParents
+                }
+                break
+            case "exams":
+                const { sessionClaims, userId } = await auth();
+                const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
+                const currentUserId = userId!;
+                const examsLessons = await prisma.lesson.findMany({
+                    where: {
+                        ...(role === "teacher" ? { teacherId: currentUserId } : {}),
+                    },
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                })
+                relatedData = {
+                    lessons: examsLessons
                 }
                 break
         }
