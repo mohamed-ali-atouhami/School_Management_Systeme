@@ -2,11 +2,11 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import FormModal from "@/components/FormModal";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Class, Lesson,Teacher, Prisma, Subject } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
+import FormContainer from "@/components/Forms/FormContainer";
 
 type Lessons = Lesson & {
     subject: Subject;
@@ -47,8 +47,8 @@ const renderRow = (role?: string) => (lesson: Lessons) => {
                 <div className="flex items-center gap-2">
                     {role === "admin" && 
                     <>
-                        <FormModal table="lessons" type="edit" data={lesson} />
-                        <FormModal table="lessons" type="delete" id={lesson.id} />
+                        <FormContainer table="lessons" type="edit" data={lesson} />
+                        <FormContainer table="lessons" type="delete" id={lesson.id} />
                     </>
                     }
                 </div>
@@ -108,6 +108,9 @@ export default async function LessonsListPage({ searchParams }: { searchParams: 
                 class: {select: {name: true}},
                 teacher: {select: {name: true, surname: true}},
             },
+            orderBy: {
+                createdAt: "desc"
+            },
             take: ITEMS_PER_PAGE,
             skip: (pageNumber - 1) * ITEMS_PER_PAGE,
         }),
@@ -131,7 +134,7 @@ export default async function LessonsListPage({ searchParams }: { searchParams: 
                         </button>
                         {role === "admin" && 
                         <>
-                            <FormModal table="lessons" type="create" />
+                            <FormContainer table="lessons" type="create" />
                         </>
                         }
                     </div>

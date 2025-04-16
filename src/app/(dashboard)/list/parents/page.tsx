@@ -2,11 +2,11 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import FormModal from "@/components/FormModal";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Parent, Prisma, Student } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
+import FormContainer from "@/components/Forms/FormContainer";
 type Parents = Parent & {
     students: Student[];
 }
@@ -53,8 +53,8 @@ const renderRow = (role?: string) => (parent: Parents) => {
                 <div className="flex items-center gap-2">
                     {role === "admin" &&
                         <>
-                            <FormModal table="parents" type="edit" data={parent} />
-                            <FormModal table="parents" type="delete" id={parent.id} />
+                            <FormContainer table="parents" type="edit" data={parent} />
+                            <FormContainer table="parents" type="delete" id={parent.id} />
                         </>
                     }
                 </div>
@@ -90,6 +90,9 @@ export default async function ParentsListPage({ searchParams }: { searchParams: 
             include: {
                 students: true,
             },
+            orderBy: {
+                createdAt: "desc",
+            },
             take: ITEMS_PER_PAGE,
             skip: (pageNumber - 1) * ITEMS_PER_PAGE,
         }),
@@ -112,7 +115,7 @@ export default async function ParentsListPage({ searchParams }: { searchParams: 
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
                         {role === "admin" &&
-                            <FormModal table="parents" type="create" />
+                            <FormContainer table="parents" type="create" />
                         }
                     </div>
                 </div>

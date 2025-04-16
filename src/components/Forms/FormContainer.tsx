@@ -123,6 +123,62 @@ export default async function FormContainer({ table, type, data, id, relatedData
                     lessons: examsLessons
                 }
                 break
+            case "parents":
+                const parentsStudents = await prisma.student.findMany({
+                    select: {
+                        id: true,
+                        name: true,
+                        surname: true
+                    }
+                })
+                relatedData = {
+                    students: parentsStudents
+                }
+                break
+            case "lessons":
+                const lessonsSubjects = await prisma.subject.findMany({
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                })
+                const lessonsClasses = await prisma.class.findMany({
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                })
+                const lessonsTeachers = await prisma.teacher.findMany({
+                    select: {
+                        id: true,
+                        name: true,
+                        surname: true
+                    }
+                })
+                // const lessonsExams = await prisma.exam.findMany({
+                //     select: {
+                //         id: true,
+                //         title: true
+                //     }
+                // })
+                // const lessonsAssignments = await prisma.assignment.findMany({
+                //     select: {
+                //         id: true,
+                //         title: true
+                //     }
+                // })
+                // const lessonsAttendances = await prisma.attendance.findMany({
+                //     select: {
+                //         id: true,
+                //         date: true
+                //     }
+                // })
+                relatedData = {
+                    subjects: lessonsSubjects,
+                    classes: lessonsClasses,
+                    teachers: lessonsTeachers
+                }
+                break
         }
     }
     return (

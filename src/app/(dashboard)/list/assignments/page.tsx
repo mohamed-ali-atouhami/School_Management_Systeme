@@ -51,7 +51,7 @@ const renderRow = (role?: string) => (assignment: Assignments) => {
             <td className="hidden md:table-cell">{new Date(assignment.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</td>
             <td>
                 <div className="flex items-center gap-2">
-                    {role === "admin" || role === "teacher" &&
+                    {(role === "admin" || role === "teacher") &&
                     <>
                         <FormModal table="assignments" type="edit" data={assignment} />
                         <FormModal table="assignments" type="delete" id={assignment.id} />
@@ -150,7 +150,7 @@ export default async function AssignmentsListPage({ searchParams }: { searchPara
                         <button className="w-8 h-8 rounded-full bg-medaliYellow flex items-center justify-center">
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
-                        {role === "admin" || role === "teacher" &&
+                        {(role === "admin" || role === "teacher") &&
                         <>
                             <FormModal table="assignments" type="create" />
                         </>

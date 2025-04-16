@@ -74,7 +74,7 @@ export default function SubjectForm({ type, data, setOpen, relatedData }: { type
                 <div className="flex justify-between flex-wrap gap-4">
                     <InputFields type="text" label="Subject Name" placeholder="subject name" control={form.control} name="subjectName" />
                     {data && <InputFields type="text" label="Id" placeholder="subject id" control={form.control} name="id" hidden/>}
-                    <div className="flex flex-col gap-2 w-full md:w-1/4">
+                    <div className="flex flex-col gap-2 w-full md:w-1/2">
                         <FormField
                             control={form.control}
                             name="teachers"

@@ -1,7 +1,7 @@
 "use server"
 
 import { auth, clerkClient } from "@clerk/nextjs/server"
-import { SubjectSchema, ClassSchema, TeacherSchema, StudentSchema, ExamSchema } from "./FormValidationSchema"
+import { SubjectSchema, ClassSchema, TeacherSchema, StudentSchema, ExamSchema, ParentSchema, LessonSchema } from "./FormValidationSchema"
 import prisma from "./prisma"
 import { UTApi } from "uploadthing/server"
 type CurrentState = {
@@ -563,6 +563,164 @@ export async function deleteStudent(formData: FormData) {
         return false;
     }
 }
+// Parent Actions
+export async function createParent(currentState: CurrentState, formData: ParentSchema) {
+    if (!formData || !formData.username || !formData.password || !formData.name || !formData.surname || !formData.phone || !formData.address) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+    try {
+        const clerk = await clerkClient()
+
+        // Create user in Clerk
+        let user;
+        try {
+            user = await clerk.users.createUser({
+                username: formData.username,
+                password: formData.password,
+                firstName: formData.name,
+                lastName: formData.surname,
+            })
+        } catch (clerkError) {
+            console.error('Clerk user creation failed:', clerkError)
+            return { success: false, error: 'Failed to create user authentication' }
+        }
+
+        if (!user || !user.id) {
+            console.error('Clerk user creation succeeded but no user ID returned')
+            return { success: false, error: 'Invalid user creation response' }
+        }
+
+        // Update user metadata
+        try {
+            await clerk.users.updateUser(user.id, {
+                publicMetadata: { role: "parent" }
+            })
+        } catch (metadataError) {
+            console.error('Failed to update user metadata:', metadataError)
+            // Clean up the created user in Clerk
+            await clerk.users.deleteUser(user.id)
+            return { success: false, error: 'Failed to set user role' }
+        }
+        // Create parent in database
+        try {
+            const parentData = {
+                id: user.id,
+                username: formData.username,
+                name: formData.name,
+                surname: formData.surname,
+                email: formData.email || '',
+                phone: formData.phone || '',
+                address: formData.address || '',
+                students: {
+                    connect: formData.students?.map((studentId: string) => ({ id: studentId })) || []
+                }
+            }
+            console.log('Creating parent with data:', parentData)
+
+            const createdParent = await prisma.parent.create({
+                data: parentData
+            })
+            if (!createdParent) {
+                throw new Error('Parent creation returned null')
+            }
+
+        } catch (dbError) {
+            console.error('Database creation failed:', dbError)
+            // Clean up the created user in Clerk
+            await clerk.users.deleteUser(user.id)
+            return { success: false, error: 'Failed to create parent record' }
+        }
+
+        return { success: true, error: false }
+    } catch (error) {
+        console.error('Unexpected error creating parent:', error)
+        return { success: false, error: 'An unexpected error occurred' }
+    }
+}
+export async function updateParent(currentState: CurrentState, formData: ParentSchema) {
+    if (!formData || !formData.id) {
+        console.error('FormData is null')
+        return { success: false, error: 'Invalid form data' }
+    }
+    try {
+        const clerk = await clerkClient()
+        let user;
+        if (!formData.id) {
+            return { success: false, error: 'Parent not found' }
+        }
+        try {
+            user = await clerk.users.updateUser(formData.id, {
+                username: formData.username,
+                ...(formData.password !== "" && { password: formData.password }),
+                firstName: formData.name,
+                lastName: formData.surname,
+            })
+        } catch (clerkError) {
+            console.error('Clerk user update failed:', clerkError)
+            return { success: false, error: 'Failed to update user authentication' }
+        }
+
+        if (!user || !user.id) {
+            console.error('Clerk user update succeeded but no user ID returned')
+            return { success: false, error: 'Invalid user update response' }
+        }
+        try {
+            const updatedParent = await prisma.parent.update({
+                where: { id: formData.id },
+                data: {
+                    ...(formData.password !== "" && { password: formData.password }),
+                    username: formData.username,
+                    name: formData.name,
+                    surname: formData.surname,
+                    email: formData.email || '',
+                    phone: formData.phone || '',
+                    address: formData.address || '',
+                    students: {
+                        connect: formData.students?.map((studentId: string) => ({ id: studentId })) || []
+                    }
+                }
+            })
+
+            if (!updatedParent) {
+                throw new Error('Parent update returned null')
+            }
+
+        } catch (dbError) {
+            console.error('Database update failed:', dbError)
+            // Clean up the created user in Clerk
+            await clerk.users.deleteUser(user.id)
+            return { success: false, error: 'Failed to update teacher record' }
+        }
+
+        return { success: true, error: false }
+    } catch (error) {
+        console.error('Unexpected error updating teacher:', error)
+        return { success: false, error: 'An unexpected error occurred' }
+    }
+}
+export async function deleteParent(formData: FormData) {
+    const id = formData.get("id");
+
+    try {
+        // Delete from Prisma
+        await prisma.parent.delete({
+            where: { id: String(id) },
+        });
+
+        // Delete from Clerk
+        try {
+            const clerk = await clerkClient();
+            await clerk.users.deleteUser(String(id));
+        } catch (clerkError) {
+            console.error("Error deleting Clerk user:", clerkError);
+        }
+        return true;
+    } catch (error) {
+        console.error("Error deleting parent from database:", error);
+        return false;
+    }
+}
 // Exam Actions
 export async function createExam(currentState: CurrentState, formData: ExamSchema) {
     if (!formData || !formData.title || !formData.lessonId || !formData.startTime || !formData.endTime) {
@@ -644,6 +802,68 @@ export async function deleteExam(formData: FormData) {
                 id: Number(id),
                 ...(role === "teacher" ? { lesson: { teacherId: currentUserId } } : {})
             },
+        })
+        return true
+    } catch (error) {
+        console.error(error)
+        return false
+    }
+}
+// Lesson Actions
+export async function createLesson(currentState: CurrentState, formData: LessonSchema) {
+    if (!formData || !formData.name) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+
+    try {
+        await prisma.lesson.create({
+            data: {
+                name: formData.name,
+                day: formData.day,
+                startTime: formData.startTime,
+                endTime: formData.endTime,
+                subjectId: formData.subjectId,
+                classId: formData.classId,
+                teacherId: formData.teacherId
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function updateLesson(currentState: CurrentState, formData: LessonSchema) {
+    if (!formData || !formData.id || !formData.name) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+
+    try {
+        await prisma.lesson.update({
+            where: { id: formData.id },
+            data: {
+                name: formData.name,
+                day: formData.day,
+                startTime: formData.startTime,
+                endTime: formData.endTime,
+                subjectId: formData.subjectId,
+                classId: formData.classId,
+                teacherId: formData.teacherId
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function deleteLesson(formData: FormData) {
+    const id = formData.get("id")
+    try {
+        await prisma.lesson.delete({
+            where: { id: Number(id) },
         })
         return true
     } catch (error) {
