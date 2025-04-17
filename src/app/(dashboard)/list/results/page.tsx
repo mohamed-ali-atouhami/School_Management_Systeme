@@ -2,11 +2,11 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import FormModal from "@/components/FormModal";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Prisma} from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
+import FormContainer from "@/components/Forms/FormContainer";
 type Results = {
     id:number,
     title:string,
@@ -75,8 +75,8 @@ const renderRow = (role?: string) => (result: Results) => {
                 <div className="flex items-center gap-2">
                     {(role === "admin" || role === "teacher") && 
                         <>
-                            <FormModal table="results" type="edit" data={result} />
-                            <FormModal table="results" type="delete" id={result.id} />
+                            <FormContainer table="results" type="edit" data={result} />
+                            <FormContainer table="results" type="delete" id={result.id} />
                         </>
                     }
                 </div>
@@ -176,6 +176,7 @@ export default async function ResultsListPage({ searchParams }: { searchParams: 
                     },
                 },
             },
+            orderBy:{createdAt:"desc"},
             take: ITEMS_PER_PAGE,
             skip: (pageNumber - 1) * ITEMS_PER_PAGE,
         }),
@@ -215,8 +216,8 @@ export default async function ResultsListPage({ searchParams }: { searchParams: 
                         <button className="w-8 h-8 rounded-full bg-medaliYellow flex items-center justify-center">
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
-                        {role === "admin" || role === "teacher" && 
-                            <FormModal table="results" type="create" />
+                        {(role === "admin" || role === "teacher") && 
+                            <FormContainer table="results" type="create" />
                         }
                     </div>
                 </div>

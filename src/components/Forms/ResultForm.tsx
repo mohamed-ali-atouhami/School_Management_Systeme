@@ -2,8 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
-
 import { Button } from "@/components/ui/button"
 import {
     Form,
@@ -13,85 +11,72 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectValue, SelectTrigger, SelectItem } from "@/components/ui/select"
 import InputFields from "../InputFields"
-import Image from "next/image"
-
-
-const formSchema = z.object({
-    username: z.string().min(3, { message: "must be at least 3 characters." })
-        .max(20, { message: "must be less than 20 characters." }),
-    email: z.string().email({ message: "Invalid email address." }),
-    password: z.string().min(8, { message: "  must be at least 8 characters." })
-        .max(20, { message: " must be less than 20 characters." }),
-    firstName: z.string().min(3, { message: "must be at least 3 characters." })
-        .max(20, { message: "must be less than 20 characters." }),
-    lastName: z.string().min(3, { message: "must be at least 3 characters." })
-        .max(20, { message: "must be less than 20 characters." }),
-    phone: z.string().min(10, { message: "must be at least 10 digits." })
-        .max(15, { message: "must be less than 15 digits." }),
-    bloodType: z.enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"], { message: "Invalid blood type." }),
-    address: z.string().min(3, { message: "must be at least 3 characters." })
-        .max(50, { message: "must be less than 50 characters." }),
-    birthDate: z.date({ message: "Invalid birth date." }),
-    sex: z.enum(["male", "female"], { message: "Invalid sex." }),
-    image: z.instanceof(File, { message: "Invalid image." }),
-})
-
-export default function ResultForm({ type, data, setOpen }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void }) {
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+import { resultSchema, ResultSchema} from "@/lib/FormValidationSchema"
+import { useTransition, useEffect } from "react"
+import { useActionState } from "react"
+import {createResult,updateResult } from "@/lib/Actions"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+export default function ResultForm({ type, data, setOpen , relatedData}: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void , relatedData?: { students: { id: string; name: string ; surname:string}[] , exams: {id : number; title : string}[] , assignments: {id : number; title : string}[] }}) {
+    const form = useForm<ResultSchema>({
+        resolver: zodResolver(resultSchema),
         defaultValues: {
-            username: "",
-            email: "",
-            password: "",
-            firstName: "",
-            lastName: "",
-            phone: "",
-            address: "",
-            birthDate: new Date(),
-            sex: "male",
-            image: undefined,
+            id: data?.id || "",
+            score: data?.score || 0,
+            studentId: data?.studentId || "",
+            examId: data?.examId || 0,
+            assignmentId: data?.assignmentId || 0,
         },
     })
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
-
-        console.log(values)
+    const [isPending, startTransition] = useTransition()
+    const [state, formAction] = useActionState(type === "create" ? createResult : updateResult, { success: false, error: false })
+    const router = useRouter()
+    useEffect(() => {
+        if (state?.success) {
+            toast.success(`Result ${type === "create" ? "created" : "updated"} successfully!`)
+            form.reset()
+            setOpen(false)
+            router.push("/list/results")
+        } else if (state?.error) {
+            toast.error(state.error || `Failed to ${type === "create" ? "create" : "update"} result!`)
+        }
+    }, [state, type, form, router, setOpen])
+    function onSubmit(values: ResultSchema) {
+        startTransition(() => {
+            formAction(values)
+        })
     }
+    const students = relatedData?.students || []
+    const exams = relatedData?.exams || []
+    const assignments = relatedData?.assignments || []
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-8">
 
-                <span className="text-xs text-gray-400 font-medium">Authentication Credentials</span>
+                <span className="text-xs text-gray-400 font-medium">Credentials</span>
                 <div className="flex justify-between flex-wrap gap-4">
-                    <InputFields type="text" label="Username" placeholder="username" control={form.control} name="username" defaultValue={data?.username} />
-                    <InputFields type="email" label="Email" placeholder="email" control={form.control} name="email" defaultValue={data?.email} />
-                    <InputFields type="password" label="Password" placeholder="password" control={form.control} name="password" defaultValue={data?.password} />
+                    <InputFields type="text" label="Score" placeholder="score" control={form.control} name="score"  />
                 </div>
-                <span className="text-xs text-gray-400  font-medium">Personal Information</span>
                 <div className="flex justify-between flex-wrap gap-4">
-                    <InputFields type="text" label="First Name" placeholder="first name" control={form.control} name="firstName" defaultValue={data?.firstName} />
-                    <InputFields type="text" label="Last Name" placeholder="last name" control={form.control} name="lastName" defaultValue={data?.lastName} />
-                    <InputFields type="text" label="Phone" placeholder="phone" control={form.control} name="phone" defaultValue={data?.phone} />
-                    <InputFields type="text" label="Address" placeholder="address" control={form.control} name="address" defaultValue={data?.address} />
                     <FormField
                         control={form.control}
-                        name="bloodType"
+                        name="studentId"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Blood Type</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={data?.bloodType}>
+                                <FormLabel>Students</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={data?.studentId}>
                                     <FormControl>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select blood type" />
+                                            <SelectValue placeholder="Select students" />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((type, index) => (
-                                            <SelectItem key={index} value={type}>
-                                                {type}
+                                        {students?.map((student: {id:string, name:string, surname:string}) => (
+                                            <SelectItem key={student.id} value={student.id}>
+                                                {student.name} {student.surname}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -102,20 +87,24 @@ export default function ResultForm({ type, data, setOpen }: { type: "create" | "
                     />
                     <FormField
                         control={form.control}
-                        name="birthDate"
-                        render={({ field: { onChange, ...field } }) => (
+                        name="examId"
+                        render={({ field }) => (
                             <FormItem>
-                                <FormLabel>
-                                    Birth Date
-                                </FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="date"
-                                        onChange={onChange}
-                                        //value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                                        defaultValue={data?.birthDate ? new Date(data?.birthDate).toISOString().split('T')[0] : ''}
-                                    />
-                                </FormControl>
+                                <FormLabel>Exams</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={data?.examId}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select Exams" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {exams?.map((exm :{id: number, title: string}) => (
+                                            <SelectItem key={exm.id} value={exm.id.toString()}>
+                                                {exm.title}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -123,19 +112,22 @@ export default function ResultForm({ type, data, setOpen }: { type: "create" | "
                     <div className="flex flex-col gap-2 w-full md:w-1/4">
                         <FormField
                             control={form.control}
-                            name="sex"
+                            name="assignmentId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Sex</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={data?.sex}>
+                                    <FormLabel>Assignments</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={data?.assignmentId}>
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select sex" />
+                                                <SelectValue placeholder="Assignments" />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="male">Male</SelectItem>
-                                            <SelectItem value="female">Female</SelectItem>
+                                            {assignments.map((asi : {id : number , title : string}) => (
+                                                <SelectItem key={asi.id} value={asi.id.toString()}>
+                                                    {asi.title}
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
@@ -143,37 +135,8 @@ export default function ResultForm({ type, data, setOpen }: { type: "create" | "
                             )}
                         />
                     </div>
-                    <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
-                        <FormField
-                            control={form.control}
-                            name="image"
-                            render={({ field: { onChange, ...field } }) => (
-                                <FormItem>
-                                    <FormLabel htmlFor="image" className="text-xs text-gray-400 flex items-center gap-2 cursor-pointer">
-                                        <Image src="/upload.png" alt="upload" width={28} height={28} />
-                                        <span>Upload Image</span>
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            id="image"
-                                            className="hidden"
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                if (file) {
-                                                    onChange(file);
-                                                }
-                                            }}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
                 </div>
-                <Button type="submit">{type === "create" ? "Create" : "Update"}</Button>
+                <Button type="submit" disabled={isPending}>{isPending ? type==="create" ? "Creating..." : "Updating..." : type === "create" ? "Create" : "Update"}</Button>
             </form>
         </Form>
     )

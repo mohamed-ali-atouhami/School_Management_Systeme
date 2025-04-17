@@ -10,6 +10,10 @@ export type FormContainerProps = {
 }
 
 export default async function FormContainer({ table, type, data, id, relatedData }: FormContainerProps) {
+    const { sessionClaims, userId } = await auth();
+    const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
+    const currentUserId = userId!;
+
     if (type === "delete" && (table === "students" || table === "teachers") && id) {
         // Fetch student data for deletion
         const studentData = await prisma.student.findUnique({
@@ -107,9 +111,6 @@ export default async function FormContainer({ table, type, data, id, relatedData
                 }
                 break
             case "exams":
-                const { sessionClaims, userId } = await auth();
-                const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
-                const currentUserId = userId!;
                 const examsLessons = await prisma.lesson.findMany({
                     where: {
                         ...(role === "teacher" ? { teacherId: currentUserId } : {}),
@@ -179,6 +180,38 @@ export default async function FormContainer({ table, type, data, id, relatedData
                     teachers: lessonsTeachers
                 }
                 break
+            case "results" : 
+                const resultsStudents = await prisma.student.findMany({
+                    where: {
+                        ...(role === "teacher" ? { teacherId: currentUserId } : {})
+                    },
+                    select: {
+                        id: true,
+                        name: true,
+                        surname: true,
+                    }
+                });
+                const resultsExams = await prisma.exam.findMany({
+                    where:{
+                        ...(role === "teacher" ? {lesson:{teacherId: currentUserId}} : {})
+
+                    },
+                    select:{
+                        id : true,
+                        title: true
+                    }
+                });
+                const resultsAssignments = await prisma.assignment.findMany({
+                    where:{
+                        ...(role === "teacher" ? {lesson:{teacherId : currentUserId}} : {})
+                    }
+                });
+                relatedData = {
+                    students: resultsStudents,
+                    exams : resultsExams,
+                    assignments : resultsAssignments
+                }
+                break;
         }
     }
     return (

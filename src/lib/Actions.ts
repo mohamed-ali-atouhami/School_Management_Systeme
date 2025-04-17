@@ -1,12 +1,12 @@
 "use server"
 
 import { auth, clerkClient } from "@clerk/nextjs/server"
-import { SubjectSchema, ClassSchema, TeacherSchema, StudentSchema, ExamSchema, ParentSchema, LessonSchema } from "./FormValidationSchema"
+import { SubjectSchema, ClassSchema, TeacherSchema, StudentSchema, ExamSchema, ParentSchema, LessonSchema, ResultSchema } from "./FormValidationSchema"
 import prisma from "./prisma"
 import { UTApi } from "uploadthing/server"
 type CurrentState = {
     success: boolean,
-    error: boolean | string
+    error: boolean | string,
 }
 // Subject Actions
 export async function createSubject(currentState: CurrentState, formData: SubjectSchema) {
@@ -864,6 +864,153 @@ export async function deleteLesson(formData: FormData) {
     try {
         await prisma.lesson.delete({
             where: { id: Number(id) },
+        })
+        return true
+    } catch (error) {
+        console.error(error)
+        return false
+    }
+}
+// results Actions 
+export async function createResult(currentState: CurrentState, formData: ResultSchema) {
+    if (!formData || !formData.score || !formData.studentId || (!formData.examId && !formData.assignmentId)) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: 'Either exam or assignment must be provided' }
+    }
+    if (formData.examId && formData.assignmentId) {
+        return { success: false, error:'Cannot link result to both exam and assignment' }
+    }
+    if (Number(formData.score) < 0 || Number(formData.score) > 100) {
+        return { success: false, error: 'Score must be between 0 and 100' }
+    }
+
+    const { sessionClaims, userId } = await auth();
+    const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
+    const currentUserId = userId!;
+    try {
+        if (role === "teacher") {
+            if (formData.examId) {
+                const teacherExam = await prisma.exam.findFirst({
+                    where: {
+                        id: formData.examId,
+                        lesson: {
+                            teacherId: currentUserId
+                        }
+                    }
+                })
+                if (!teacherExam) {
+                    return { success: false, error: 'Teacher does not teach this exam' }
+                }
+            } else if (formData.assignmentId) {
+                const teacherAssignment = await prisma.assignment.findFirst({
+                    where: {
+                        id: formData.assignmentId,
+                        lesson: {
+                            teacherId: currentUserId
+                        }
+                    }
+                })
+                if (!teacherAssignment) {
+                    return { success: false, error: 'Teacher does not teach this assignment' }
+                }
+            }
+        }
+        await prisma.result.create({
+            data: {
+                score: Number(formData.score),
+                studentId: formData.studentId,
+                examId: formData.examId || null,
+                assignmentId: formData.assignmentId || null
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function updateResult(currentState: CurrentState, formData: ResultSchema) {
+    if (!formData || !formData.id || !formData.score || !formData.studentId || (!formData.examId && !formData.assignmentId)) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: 'Either exam or assignment must be provided'  }
+    }
+    if (formData.examId && formData.assignmentId) {
+        return { success: false, error: 'Cannot link result to both exam and assignment' }
+    }
+    if (Number(formData.score) < 0 || Number(formData.score) > 100) {
+        return { success: false, error: 'Score must be between 0 and 100' }
+    }
+
+    const { sessionClaims, userId } = await auth();
+    const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
+    const currentUserId = userId!;
+    try {
+        if (role === "teacher") {
+            if (formData.examId) {
+                const teacherExam = await prisma.exam.findFirst({
+                    where: {
+                        id: formData.examId,
+                        lesson: {
+                            teacherId: currentUserId
+                        }
+                    }
+                })
+                if (!teacherExam) {
+                    return { success: false, error: 'Teacher does not teach this exam' }
+                }
+            } else if (formData.assignmentId) {
+                const teacherAssignment = await prisma.assignment.findFirst({
+                    where: {
+                        id: formData.assignmentId,
+                        lesson: {
+                            teacherId: currentUserId
+                        }
+                    }
+                })
+                if (!teacherAssignment) {
+                    return { success: false, error: 'Teacher does not teach this assignment' }
+                }
+            }
+        }
+        await prisma.result.update({
+            where: { id: formData.id },
+            data: {
+                score: Number(formData.score),
+                studentId: formData.studentId,
+                examId: formData.examId || null,
+                assignmentId: formData.assignmentId || null
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function deleteResult(formData: FormData) {
+    const id = formData.get("id")
+    const { sessionClaims, userId } = await auth();
+    const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
+    const currentUserId = userId!;
+    try {
+        await prisma.result.delete({
+            where: {
+                id: Number(id),
+                ...(role === "teacher" ? { 
+                    OR: [
+                        { 
+                            exam: {
+                                lesson: { teacherId: currentUserId }
+                            }
+                        },
+                        {
+                            assignment: {
+                                lesson: { teacherId: currentUserId }
+                            }
+                        }
+                    ]
+                } : {})
+            },
         })
         return true
     } catch (error) {
