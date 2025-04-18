@@ -89,6 +89,16 @@ export const examSchema = z.object({
 
 export type ExamSchema = z.infer<typeof examSchema>;
 
+export const assignmentSchema = z.object({
+  id: z.coerce.number().optional(),
+  title: z.string().min(1, { message: "Title name is required!" }),
+  startDate: z.coerce.date({ message: "Start date is required!" }),
+  dueDate: z.coerce.date({ message: "Due date is required!" }),
+  lessonId: z.coerce.number({ message: "Lesson is required!" }),
+});
+
+export type AssignmentSchema = z.infer<typeof assignmentSchema>;
+
 export const lessonSchema = z.object({
   id: z.coerce.number().optional(),
   name: z.string().min(1, { message: "Name is required!" }),
@@ -136,3 +146,35 @@ export const resultSchema = z.object({
 });
 
 export type ResultSchema = z.infer<typeof resultSchema>;
+
+export const attendanceSchema = z.object({
+  id: z.coerce.number().optional(),
+  date: z.coerce.date({ message: "Date is required!" }),
+  present: z.enum(["true", "false"], { message: "Present is required!" }),
+  studentId: z.coerce.string({ message: "Student is required!" }),
+  lessonId: z.coerce.number({ message: "Lesson is required!" }),
+});
+
+export type AttendanceSchema = z.infer<typeof attendanceSchema>;
+
+export const eventSchema = z.object({
+  id: z.coerce.number().optional(),
+  title: z.string().min(1, { message: "Title is required!" }),
+  description: z.string().min(1, { message: "Description is required!" }),
+  startTime: z.coerce.date({ message: "Start time is required!" }),
+  endTime: z.coerce.date({ message: "End time is required!" }),
+  classId: z.coerce.number({ message: "Class is required!" }),
+});
+
+export type EventSchema = z.infer<typeof eventSchema>;
+
+export const announcementSchema = z.object({
+  id: z.coerce.number().optional(),
+  title: z.string().min(1, { message: "Title is required!" }),
+  description: z.string().min(1, { message: "Description is required!" }),
+  date: z.coerce.date({ message: "Date is required!" }),
+  classId: z.coerce.number({ message: "Class is required!" }),
+});
+
+export type AnnouncementSchema = z.infer<typeof announcementSchema>;
+

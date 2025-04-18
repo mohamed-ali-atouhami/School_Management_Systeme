@@ -2,22 +2,25 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import { Class, Event, Prisma } from "@prisma/client";
+import { Prisma, Student, Lesson, Attendance } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { auth } from "@clerk/nextjs/server";
 import FormContainer from "@/components/Forms/FormContainer";
-type Events = Event & {
-    class: Class;
+
+type Attendances = Attendance & {
+    student: Student;
+    lesson: Lesson;
 }
+
 const getColumns = (role?: string) => [
     {
-        header: "Title",
-        accessor: "title",
+        header: "Student",
+        accessor: "student",
     },
     {
-        header: "Class",
-        accessor: "class",
+        header: "Lesson",
+        accessor: "lesson",
     },
     {
         header: "Date",
@@ -25,62 +28,57 @@ const getColumns = (role?: string) => [
         className: "hidden lg:table-cell",
     },
     {
-        header: "Start Time",
-        accessor: "startTime",
-        className: "hidden md:table-cell",
+        header: "Status",
+        accessor: "present",
     },
-    {
-        header: "End Time",
-        accessor: "endTime",
-        className: "hidden md:table-cell",
-    },
-    ...(role === "admin" ? [{
+    ...((role === "admin" || role === "teacher") ? [{
         header: "Actions",
         accessor: "actions",
     }] : []),
+];
 
-
-]
-const renderRow = (role?: string) => (event: Events) => {
+const renderRow = (role?: string) => (attendance: Attendances) => {
     return (
-        <tr key={event.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
+        <tr key={attendance.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
             <td className="flex items-center gap-4 p-4">
-                {event.title}
+                {attendance.student.name} {attendance.student.surname}
             </td>
-            <td >{event.class?.name || "-"}</td>
-            <td className="hidden lg:table-cell">{new Intl.DateTimeFormat("GMT").format(event.startTime)}</td>
-            <td className="hidden lg:table-cell">{new Date(event.startTime).toLocaleString("GMT",{hour: "2-digit", minute: "2-digit" , hour12: false})}</td>
-            <td className="hidden md:table-cell">{new Date(event.endTime).toLocaleString("GMT",{hour: "2-digit", minute: "2-digit" , hour12: false})}</td>
+            <td>{attendance.lesson.name}</td>
+            <td className="hidden lg:table-cell">{new Date(attendance.date).toLocaleString("GMT", { day: "2-digit", month: "2-digit", year: "numeric" })}</td>
+            <td>{attendance.present === true ? "Present" : "Absent"}</td>
             <td>
                 <div className="flex items-center gap-2">
-                    {role === "admin" && 
-                    <>
-                        <FormContainer table="events" type="edit" data={event} />
-                        <FormContainer table="events" type="delete" id={event.id} />
-                    </>
+                    {(role === "admin" || role === "teacher") &&
+                        <>
+                            <FormContainer table="attendances" type="edit" data={attendance} />
+                            <FormContainer table="attendances" type="delete" id={attendance.id} />
+                        </>
                     }
                 </div>
             </td>
         </tr>
     )
-}
+};
 
-export default async function EventsListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
-    const { sessionClaims ,userId} = await auth();
+export default async function AttendancesListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+    const { sessionClaims, userId } = await auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
     const currentUserId = userId!;
 
     const { page, ...queryparams } = searchParams;
     const pageNumber = page ? Number(page) : 1;
+    
     // URL PARAMS CONDITIONS
-    const query: Prisma.EventWhereInput = {};
+    const query: Prisma.AttendanceWhereInput = {};
     if (queryparams) {
         for (const [key, value] of Object.entries(queryparams)) {
             switch (key) {
                 case "search":
-                    query.title = {
-                        contains: value,
-                        mode: "insensitive"
+                    query.student = {
+                        OR: [
+                            { name: { contains: value, mode: "insensitive" } },
+                            { surname: { contains: value, mode: "insensitive" } }
+                        ]
                     }
                     break;
                 default:
@@ -88,51 +86,38 @@ export default async function EventsListPage({ searchParams }: { searchParams: {
             }
         }
     }
-    //Role conditions
+
+    // Role conditions
     const roleConditions = {
         admin: {},
         teacher: {
-            class: {
-                lessons: {
-                    some: {
-                        teacherId: currentUserId
-                    }
-                }
+            lesson: {
+                teacherId: currentUserId
             }
         },
         student: {
-            class: {
-                students: {
-                    some: {
-                        id: currentUserId
-                    }
-                }
-            }
+            studentId: currentUserId
         },
         parent: {
-            class: {
-                students: {
-                    some: {
-                        parentId: currentUserId
-                    }
-                }
+            student: {
+                parentId: currentUserId
             }
         }
     }
+
     // Only apply role-based filtering for non-admin roles
     if (role !== "admin") {
         query.OR = [
-            {
-                classId: null
-            },
             roleConditions[role as keyof typeof roleConditions]
         ]
     }
-    const [eventsData, count] = await prisma.$transaction([
-        prisma.event.findMany({
+
+    const [attendancesData, count] = await prisma.$transaction([
+        prisma.attendance.findMany({
             where: query,
             include: {
-                class: {select: {name: true}},
+                student: true,
+                lesson: true,
             },
             orderBy: {
                 createdAt: "desc"
@@ -140,15 +125,16 @@ export default async function EventsListPage({ searchParams }: { searchParams: {
             take: ITEMS_PER_PAGE,
             skip: (pageNumber - 1) * ITEMS_PER_PAGE,
         }),
-        prisma.event.count({
+        prisma.attendance.count({
             where: query,
         }),
     ]);
+
     return (
         <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
             {/* top */}
             <div className="flex justify-between items-center">
-                <h1 className="hidden md:block text-lg font-semibold">All Events</h1>
+                <h1 className="hidden md:block text-lg font-semibold">All Attendances</h1>
                 <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
                     <TableSearch />
                     <div className="flex items-center gap-4 self-end">
@@ -158,16 +144,20 @@ export default async function EventsListPage({ searchParams }: { searchParams: {
                         <button className="w-8 h-8 rounded-full bg-medaliYellow flex items-center justify-center">
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
-                        {role === "admin" && 
-                        <>
-                            <FormContainer table="events" type="create" />
-                        </>
+                        {(role === "admin" || role === "teacher") &&
+                            <>
+                                <FormContainer table="attendances" type="create" />
+                            </>
                         }
                     </div>
                 </div>
             </div>
             {/* list */}
-            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={eventsData} />
+            <Table
+                columns={getColumns(role)}
+                renderRow={renderRow(role)}
+                data={attendancesData}
+            />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />
         </div>

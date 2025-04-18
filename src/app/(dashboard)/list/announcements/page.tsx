@@ -2,12 +2,11 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import FormModal from "@/components/FormModal";
 import { Class, Announcement, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { auth } from "@clerk/nextjs/server";
-
+import FormContainer from "@/components/Forms/FormContainer";
 type Announcements = Announcement & {
     class: Class;
 }
@@ -44,8 +43,8 @@ const renderRow = (role?: string) => (announcement: Announcements) => {
                 <div className="flex items-center gap-2">
                     {role === "admin" &&
                         <>
-                            <FormModal table="announcements" type="edit" data={announcement} />
-                            <FormModal table="announcements" type="delete" id={announcement.id} />
+                            <FormContainer table="announcements" type="edit" data={announcement} />
+                            <FormContainer table="announcements" type="delete" id={announcement.id} />
                         </>
                     }
                 </div>
@@ -81,9 +80,11 @@ export default async function AnnouncementsListPage({ searchParams }: { searchPa
     const roleConditions = {
         admin: {},
         teacher: {
-            lessons: {
-                some: {
-                    teacherId: currentUserId
+            class: {
+                lessons: {
+                    some: {
+                        teacherId: currentUserId
+                    }
                 }
             }
         },
@@ -106,17 +107,23 @@ export default async function AnnouncementsListPage({ searchParams }: { searchPa
             }
         }
     }
+    // Only apply role-based filtering for non-admin roles
+    if (role !== "admin") {
     query.OR = [
         {
             classId: null
         },
-        roleConditions[role as keyof typeof roleConditions]
-    ]
+            roleConditions[role as keyof typeof roleConditions]
+        ]
+    }
     const [announcementsData, count] = await prisma.$transaction([
         prisma.announcement.findMany({
             where: query,
             include: {
                 class: { select: { name: true } },
+            },
+            orderBy: {
+                createdAt: "desc"
             },
             take: ITEMS_PER_PAGE,
             skip: (pageNumber - 1) * ITEMS_PER_PAGE,
@@ -141,7 +148,7 @@ export default async function AnnouncementsListPage({ searchParams }: { searchPa
                         </button>
                         {role === "admin" &&
                             <>
-                                <FormModal table="announcements" type="create" />
+                                <FormContainer table="announcements" type="create" />
                             </>
                         }
                     </div>

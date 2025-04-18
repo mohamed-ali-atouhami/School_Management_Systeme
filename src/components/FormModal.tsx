@@ -15,7 +15,7 @@ import Image from "next/image"
 import React, { useState, useTransition } from "react"
 import dynamic from "next/dynamic"
 import { Loader } from "lucide-react"
-import { deleteSubject, deleteClass, deleteTeacher, deleteStudent, deleteExam, deleteParent, deleteLesson, deleteResult } from "@/lib/Actions"
+import { deleteSubject, deleteClass, deleteTeacher, deleteStudent, deleteExam, deleteParent, deleteLesson, deleteResult, deleteAssignment, deleteEvent, deleteAttendance } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { FormContainerProps } from "./Forms/FormContainer"
@@ -30,7 +30,7 @@ const ResultForm = dynamic(() => import("./Forms/ResultForm"), { ssr: false, loa
 const EventForm = dynamic(() => import("./Forms/EventForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
 const LessonForm = dynamic(() => import("./Forms/LessonForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
 const SubjectForm = dynamic(() => import("./Forms/SubjectForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
-
+const AttendanceForm = dynamic(() => import("./Forms/AttendanceForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
 const formMap: Record<string, React.ComponentType<{ type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: any }>> = {
     teachers: TeacherForm,
     students: StudentForm,
@@ -43,21 +43,25 @@ const formMap: Record<string, React.ComponentType<{ type: "create" | "edit", dat
     events: EventForm,
     lessons: LessonForm,
     subjects: SubjectForm,
+    attendances: AttendanceForm,
 }
 
 // First, let's define a type for our delete functions
 type DeleteFunction = (formData: FormData) => Promise<boolean>;
 
 // Then create a proper type for the deleteMap
-const deleteMap: Partial<Record<"students" | "teachers" | "parents" | "classes" | "exams" | "assignments" | "results" | "events" | "announcements" | "attendance" | "lessons" | "subjects", DeleteFunction>> = {
+const deleteMap: Partial<Record<"students" | "teachers" | "parents" | "classes" | "exams" | "assignments" | "results" | "events" | "announcements" | "attendances" | "lessons" | "subjects", DeleteFunction>> = {
     subjects: deleteSubject,
     classes: deleteClass,
     teachers: deleteTeacher,
     students: deleteStudent,
     exams: deleteExam,
+    assignments: deleteAssignment,
     parents: deleteParent,
     lessons: deleteLesson,
-    results:deleteResult,
+    results: deleteResult,
+    events: deleteEvent,
+    attendances: deleteAttendance,
 }
 
 export default function FormModal({ table, type, data, id, relatedData }: FormContainerProps & { relatedData?: any }) {

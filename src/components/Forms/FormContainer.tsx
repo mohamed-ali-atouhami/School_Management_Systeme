@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma"
 import FormModal from "../FormModal"
 import { auth } from "@clerk/nextjs/server"
 export type FormContainerProps = {
-    table: "students" | "teachers" | "parents" | "classes" | "exams" | "assignments" | "results" | "events" | "announcements" | "attendance" | "lessons" | "subjects",
+    table: "students" | "teachers" | "parents" | "classes" | "exams" | "assignments" | "results" | "events" | "announcements" | "attendances" | "lessons" | "subjects",
     type: "create" | "edit" | "delete",
     data?: any,
     id?: number | string,
@@ -210,6 +210,95 @@ export default async function FormContainer({ table, type, data, id, relatedData
                     students: resultsStudents,
                     exams : resultsExams,
                     assignments : resultsAssignments
+                }
+                break;
+            case "assignments":
+                const assignmentsLessons = await prisma.lesson.findMany({
+                    where: {
+                        ...(role === "teacher" ? { teacherId: currentUserId } : {})
+                    },
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                })
+                relatedData = {
+                    lessons: assignmentsLessons
+                }
+                break;
+            case "events":
+                const eventsClasses = await prisma.class.findMany({
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                })
+                relatedData = {
+                    classes: eventsClasses
+                }
+                break;
+            case "announcements":
+                const announcementsClasses = await prisma.class.findMany({
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                })
+                relatedData = {
+                    classes: announcementsClasses
+                }
+                break;
+            case "attendances":
+                const attendanceLessons = await prisma.lesson.findMany({
+                    where: {
+                        ...(role === "teacher" ? { 
+                            teacherId: currentUserId,
+                            class: {
+                                students: {
+                                    some: {
+                                        teacherId: currentUserId
+                                    }
+                                }
+                            }
+                        } : {})
+                    },
+                    select: {
+                        id: true,
+                        name: true,
+                        class: {
+                            select: {
+                                name: true
+                            }
+                        }
+                    }
+                })
+                const attendanceStudents = await prisma.student.findMany({
+                    where: {
+                        ...(role === "teacher" ? { 
+                            teacherId: currentUserId,
+                            class: {
+                                lessons: {
+                                    some: {
+                                        teacherId: currentUserId
+                                    }
+                                }
+                            }
+                        } : {})
+                    },
+                    select: {
+                        id: true,
+                        name: true,
+                        surname: true,
+                        class: {
+                            select: {
+                                name: true
+                            }
+                        }
+                    }
+                })
+                relatedData = {
+                    lessons: attendanceLessons,
+                    students: attendanceStudents
                 }
                 break;
         }

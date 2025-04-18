@@ -2,12 +2,11 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import FormModal from "@/components/FormModal";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Assignment, Lesson, Prisma, Subject, Class, Teacher } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-
+import FormContainer from "@/components/Forms/FormContainer";
 type Assignments = Assignment & {
     lesson: Lesson & {
         subject: Subject;
@@ -53,8 +52,8 @@ const renderRow = (role?: string) => (assignment: Assignments) => {
                 <div className="flex items-center gap-2">
                     {(role === "admin" || role === "teacher") &&
                     <>
-                        <FormModal table="assignments" type="edit" data={assignment} />
-                        <FormModal table="assignments" type="delete" id={assignment.id} />
+                        <FormContainer table="assignments" type="edit" data={assignment} />
+                        <FormContainer table="assignments" type="delete" id={assignment.id} />
                     </>
                     }
                 </div>
@@ -129,6 +128,9 @@ export default async function AssignmentsListPage({ searchParams }: { searchPara
                     },
                 },
             },
+            orderBy: {
+                createdAt: "desc",
+            },
             take: ITEMS_PER_PAGE,
             skip: (pageNumber - 1) * ITEMS_PER_PAGE,
         }),
@@ -152,7 +154,7 @@ export default async function AssignmentsListPage({ searchParams }: { searchPara
                         </button>
                         {(role === "admin" || role === "teacher") &&
                         <>
-                            <FormModal table="assignments" type="create" />
+                            <FormContainer table="assignments" type="create" />
                         </>
                         }
                     </div>

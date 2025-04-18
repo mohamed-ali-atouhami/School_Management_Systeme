@@ -1,7 +1,7 @@
 "use server"
 
 import { auth, clerkClient } from "@clerk/nextjs/server"
-import { SubjectSchema, ClassSchema, TeacherSchema, StudentSchema, ExamSchema, ParentSchema, LessonSchema, ResultSchema } from "./FormValidationSchema"
+import { SubjectSchema, ClassSchema, TeacherSchema, StudentSchema, ExamSchema, ParentSchema, LessonSchema, ResultSchema, AssignmentSchema, EventSchema, AnnouncementSchema, AttendanceSchema } from "./FormValidationSchema"
 import prisma from "./prisma"
 import { UTApi } from "uploadthing/server"
 type CurrentState = {
@@ -809,6 +809,94 @@ export async function deleteExam(formData: FormData) {
         return false
     }
 }
+// Assignment Actions
+export async function createAssignment(currentState: CurrentState, formData: AssignmentSchema) {
+    if (!formData || !formData.title || !formData.lessonId || !formData.startDate || !formData.dueDate) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+    const { sessionClaims, userId } = await auth();
+    const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
+    const currentUserId = userId!;
+    try {
+        if (role === "teacher") {
+            const teacherLessons = await prisma.lesson.findFirst({
+                where: {
+                    id: formData.lessonId,
+                    teacherId: currentUserId
+                }
+            })
+            if (!teacherLessons) {
+                return { success: false, error: 'Teacher does not teach this lesson' }
+            }
+        }
+        await prisma.assignment.create({
+            data: {
+                title: formData.title,
+                startDate: formData.startDate,
+                dueDate: formData.dueDate,
+                lessonId: formData.lessonId
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function updateAssignment(currentState: CurrentState, formData: AssignmentSchema) {
+    if (!formData || !formData.id || !formData.title || !formData.lessonId || !formData.startDate || !formData.dueDate) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+    const { sessionClaims, userId } = await auth();
+    const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
+    const currentUserId = userId!;
+    try {
+        if (role === "teacher") {
+            const teacherLessons = await prisma.lesson.findFirst({
+                where: {
+                    id: formData.lessonId,
+                    teacherId: currentUserId
+                }
+            })
+            if (!teacherLessons) {
+                return { success: false, error: 'Teacher does not teach this lesson' }
+            }
+        }
+        await prisma.assignment.update({
+            where: { id: formData.id },
+            data: {
+                title: formData.title,
+                startDate: formData.startDate,
+                dueDate: formData.dueDate,
+                lessonId: formData.lessonId
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function deleteAssignment(formData: FormData) {
+    const id = formData.get("id")
+    const { sessionClaims, userId } = await auth();
+    const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
+    const currentUserId = userId!;
+    try {
+        await prisma.assignment.delete({
+            where: {
+                id: Number(id),
+                ...(role === "teacher" ? { lesson: { teacherId: currentUserId } } : {})
+            },
+        })
+        return true
+    } catch (error) {
+        console.error(error)
+        return false
+    }
+}
 // Lesson Actions
 export async function createLesson(currentState: CurrentState, formData: LessonSchema) {
     if (!formData || !formData.name) {
@@ -1011,6 +1099,240 @@ export async function deleteResult(formData: FormData) {
                     ]
                 } : {})
             },
+        })
+        return true
+    } catch (error) {
+        console.error(error)
+        return false
+    }
+}
+// Event Actions
+export async function createEvent(currentState: CurrentState, formData: EventSchema) {
+    if (!formData || !formData.title || !formData.description || !formData.startTime || !formData.endTime || !formData.classId) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+    try {
+        await prisma.event.create({
+            data: {
+                title: formData.title,
+                description: formData.description,
+                startTime: formData.startTime,
+                endTime: formData.endTime,
+                classId: formData.classId
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function updateEvent(currentState: CurrentState, formData: EventSchema) {
+    if (!formData || !formData.id || !formData.title || !formData.description || !formData.startTime || !formData.endTime || !formData.classId) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+    try {
+        await prisma.event.update({
+            where: { id: formData.id },
+            data: {
+                title: formData.title,
+                description: formData.description,
+                startTime: formData.startTime,
+                endTime: formData.endTime,
+                classId: formData.classId
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function deleteEvent(formData: FormData) {
+    const id = formData.get("id")
+    try {
+        await prisma.event.delete({
+            where: { id: Number(id) }
+        })
+        return true
+    } catch (error) {
+        console.error(error)
+        return false
+    }
+}
+// Announcement Actions
+export async function createAnnouncement(currentState: CurrentState, formData: AnnouncementSchema) {
+    if (!formData || !formData.title || !formData.description || !formData.date || !formData.classId) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+    try {
+        await prisma.announcement.create({
+            data: {
+                title: formData.title,
+                description: formData.description,
+                date: formData.date,
+                classId: formData.classId
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function updateAnnouncement(currentState: CurrentState, formData: AnnouncementSchema) {
+    if (!formData || !formData.id || !formData.title || !formData.description || !formData.date || !formData.classId) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+    try {
+        await prisma.announcement.update({
+            where: { id: formData.id },
+            data: {
+                title: formData.title,
+                description: formData.description,
+                date: formData.date,
+                classId: formData.classId
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function deleteAnnouncement(formData: FormData) {
+    const id = formData.get("id")
+    try {
+        await prisma.announcement.delete({
+            where: { id: Number(id) }
+        })
+        return true
+    } catch (error) {
+        console.error(error)
+        return false
+    }
+}
+// Attendance Actions
+export async function createAttendance(currentState: CurrentState, formData: AttendanceSchema) {
+    if (!formData || !formData.studentId || !formData.lessonId || !formData.date || !formData.present) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+    const { sessionClaims, userId } = await auth();
+    const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
+    const currentUserId = userId!;
+    try {
+        if (role === "teacher") {
+            // Check if the teacher teaches this lesson and the student is in their class
+            const teacherLesson = await prisma.lesson.findFirst({
+                where: {
+                    id: formData.lessonId,
+                    teacherId: currentUserId,
+                    class: {
+                        students: {
+                            some: {
+                                id: formData.studentId,
+                                teacherId: currentUserId
+                            }
+                        }
+                    }
+                }
+            })
+            if (!teacherLesson) {
+                return { success: false, error: 'You can only mark attendance for your students in your lessons' }
+            }
+        }
+        await prisma.attendance.create({
+            data: {
+                studentId: formData.studentId,
+                lessonId: formData.lessonId,
+                date: formData.date,
+                present: formData.present === "true" ? true : false
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function updateAttendance(currentState: CurrentState, formData: AttendanceSchema) {
+    if (!formData || !formData.id || !formData.studentId || !formData.lessonId || !formData.date || !formData.present) {
+        console.error('Invalid form data received:', formData)
+        return { success: false, error: true }
+    }
+    const { sessionClaims, userId } = await auth();
+    const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
+    const currentUserId = userId!;
+    try {
+        if (role === "teacher") {
+            // Check if the teacher teaches this lesson and the student is in their class
+            const teacherLesson = await prisma.lesson.findFirst({
+                where: {
+                    id: formData.lessonId,
+                    teacherId: currentUserId,
+                    class: {
+                        students: {
+                            some: {
+                                id: formData.studentId,
+                                teacherId: currentUserId
+                            }
+                        }
+                    }
+                }
+            })
+            if (!teacherLesson) {
+                return { success: false, error: 'You can only update attendance for your students in your lessons' }
+            }
+        }
+        await prisma.attendance.update({
+            where: { id: formData.id },
+            data: {
+                studentId: formData.studentId,
+                lessonId: formData.lessonId,
+                date: formData.date,
+                present: formData.present === "true" ? true : false
+            }
+        })
+        return { success: true, error: false }
+    } catch (error) {
+        console.error(error)
+        return { success: false, error: true }
+    }
+}
+export async function deleteAttendance(formData: FormData) {
+    const id = formData.get("id")
+    const { sessionClaims, userId } = await auth();
+    const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
+    const currentUserId = userId!;
+    try {
+        if (role === "teacher") {
+            // Check if the teacher has permission to delete this attendance
+            const attendance = await prisma.attendance.findFirst({
+                where: {
+                    id: Number(id),
+                    lesson: {
+                        teacherId: currentUserId,
+                        class: {
+                            students: {
+                                some: {
+                                    teacherId: currentUserId
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+            if (!attendance) {
+                return false
+            }
+        }
+        await prisma.attendance.delete({
+            where: { id: Number(id) }
         })
         return true
     } catch (error) {
