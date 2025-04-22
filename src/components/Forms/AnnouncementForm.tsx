@@ -73,7 +73,7 @@ export default function AnnouncementForm({ type, data, setOpen, relatedData }: {
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-8">
 
-                <span className="text-xs text-gray-400 font-medium">Event Details</span>
+                <span className="text-xs text-gray-400 font-medium">Announcement Details</span>
                 <div className="flex justify-between flex-wrap gap-4">
                     <InputFields type="text" label="Title" placeholder="title" control={form.control} name="title"   />
                     <InputFields type="text" label="Description" placeholder="description" control={form.control} name="description"   />

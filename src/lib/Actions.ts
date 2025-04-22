@@ -311,29 +311,41 @@ export async function updateTeacher(currentState: CurrentState, formData: Teache
     }
 }
 export async function deleteTeacher(formData: FormData) {
-    const id = formData.get("id");
+    const id = formData.get("id") as string;
     const imageUrl = formData.get("image") as string;
 
+    if (!id) {
+        console.error("No teacher ID provided");
+        return false;
+    }
+
     try {
-        // Delete from Prisma
+        // First try to delete from Prisma
         await prisma.teacher.delete({
-            where: { id: String(id) },
+            where: { id: id },
         });
 
-        // Delete from Clerk
+        // Then try to delete from Clerk
         try {
             const clerk = await clerkClient();
-            await clerk.users.deleteUser(String(id));
+            // Check if user exists in Clerk before attempting deletion
+            const user = await clerk.users.getUser(id);
+            if (user) {
+                await clerk.users.deleteUser(id);
+            }
         } catch (clerkError) {
-            console.error("Error deleting Clerk user:", clerkError);
+            console.error("Error with Clerk operations:", clerkError);
+            // Continue even if Clerk operations fail
         }
 
-        // Delete image from UploadThing
-        await deleteImageFromUploadThing(imageUrl, "teacher deletion");
+        // Finally delete image if it exists
+        if (imageUrl) {
+            await deleteImageFromUploadThing(imageUrl, "teacher deletion");
+        }
 
         return true;
     } catch (error) {
-        console.error("Error deleting teacher from database:", error);
+        console.error("Error deleting teacher:", error);
         return false;
     }
 }
@@ -677,7 +689,7 @@ export async function updateParent(currentState: CurrentState, formData: ParentS
                     phone: formData.phone || '',
                     address: formData.address || '',
                     students: {
-                        connect: formData.students?.map((studentId: string) => ({ id: studentId })) || []
+                        set: formData.students?.map((studentId: string) => ({ id: studentId })) || []
                     }
                 }
             })
@@ -1338,5 +1350,44 @@ export async function deleteAttendance(formData: FormData) {
     } catch (error) {
         console.error(error)
         return false
+    }
+}
+// User Login Statistics Actions
+export async function getUserLoginStatistics() {
+    try {
+        const clerk = await clerkClient()
+        const response = await clerk.users.getUserList()
+        const users = response.data
+        
+        // Get current month and previous months
+        const currentDate = new Date()
+        const months = Array.from({ length: 12 }, (_, i) => {
+            const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
+            return {
+                month: date.toLocaleString('default', { month: 'short' }),
+                year: date.getFullYear(),
+                loginCount: 0
+            }
+        }).reverse()
+
+        // Count logins for each month
+        for (const user of users) {
+            const lastSignIn = user.lastSignInAt
+            if (lastSignIn) {
+                const signInDate = new Date(lastSignIn)
+                const monthIndex = months.findIndex(m => 
+                    m.month === signInDate.toLocaleString('default', { month: 'short' }) &&
+                    m.year === signInDate.getFullYear()
+                )
+                if (monthIndex !== -1) {
+                    months[monthIndex].loginCount++
+                }
+            }
+        }
+
+        return { success: true, data: months }
+    } catch (error) {
+        console.error('Error fetching user login statistics:', error)
+        return { success: false, error: 'Failed to fetch user login statistics' }
     }
 }

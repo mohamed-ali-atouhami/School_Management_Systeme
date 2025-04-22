@@ -56,7 +56,7 @@ export default function ResultForm({ type, data, setOpen , relatedData}: { type:
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-8">
 
-                <span className="text-xs text-gray-400 font-medium">Credentials</span>
+                <span className="text-xs text-gray-400 font-medium">Result Details</span>
                 <div className="flex justify-between flex-wrap gap-4">
                     <InputFields type="text" label="Score" placeholder="score" control={form.control} name="score"  />
                 </div>

@@ -51,8 +51,8 @@ export default function ParentForm({ type, data, setOpen, relatedData }: { type:
             setOpen(false)
             router.refresh()
         } else if (state?.error) {
-            toast.error(`Failed to ${type === "create" ? "create" : "update"} parent: ${state.error}`)
-            console.error("Form action error:", state.error)
+            toast.error(state.error || `Failed to ${type === "create" ? "create" : "update"} parent`)
+            //console.error("Form action error:", state.error)
         }
     }, [state, type, router, setOpen])
 

@@ -2,28 +2,32 @@
 
 import Image from "next/image"
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { getUserLoginStatistics } from "@/lib/Actions"
+import { useEffect, useState } from "react"
 
-const chartData = [
-    { month: "Jan", income: 80, expense: 150 },
-    { month: "Feb", income: 200, expense: 50 },
-    { month: "Mar", income: 120, expense: 60 },
-    { month: "Apr", income: 190, expense: 85 },
-    { month: "May", income: 130, expense: 65 },
-    { month: "Jun", income: 140, expense: 70 },
-    { month: "Jul", income: 200, expense: 140 },
-    { month: "Aug", income: 100, expense: 50 },
-    { month: "Sep", income: 300, expense: 30 },
-    { month: "Oct", income: 90, expense: 45 },
-    { month: "Nov", income: 20, expense: 5 },
-    { month: "Dec", income: 220, expense: 110 },
-]
-
+interface ChartData {
+    month: string
+    year: number
+    loginCount: number
+}
 
 export function FinanceChart() {
+    const [chartData, setChartData] = useState<ChartData[]>([])
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const result = await getUserLoginStatistics()
+            if (result.success && result.data) {
+                setChartData(result.data)
+            }
+        }
+        fetchData()
+    }, [])
+
     return (
         <div className="bg-white rounded-xl w-full h-full p-4">
             <div className="flex items-center justify-between">
-                <h1 className="text-lg font-semibold">Finance</h1>
+                <h1 className="text-lg font-semibold">User Activity</h1>
                 <Image src="/moreDark.png" alt="" width={20} height={20} />
             </div>
             <div className="w-full h-[90%]">
@@ -54,23 +58,16 @@ export function FinanceChart() {
 
                         <Legend align="center" verticalAlign="top" wrapperStyle={{ paddingTop: "10px", paddingBottom: "30px" }} />
                         <Line
-                            dataKey="income"
+                            dataKey="loginCount"
+                            name="Logins"
                             type="monotone"
                             stroke="#C3EBFA"
-                            strokeWidth={4}
-                            dot={false}
-                        />
-                        <Line
-                            dataKey="expense"
-                            type="monotone"
-                            stroke="#CFCEFF"
                             strokeWidth={4}
                             dot={false}
                         />
                     </LineChart>
                 </ResponsiveContainer>
             </div>
-
         </div>
     )
 }

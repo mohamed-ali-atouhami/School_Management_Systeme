@@ -56,7 +56,7 @@ export default function StudentForm({ type, data, setOpen, relatedData }: { type
             setOpen(false)
             router.refresh()
         } else if (state?.error) {
-            toast.error(`Failed to ${type === "create" ? "create" : "update"} student: ${state.error}`)
+            toast.error(state.error || `Failed to ${type === "create" ? "create" : "update"} student`)
             console.error("Form action error:", state.error)
         }
     }, [state, type, router, setOpen])

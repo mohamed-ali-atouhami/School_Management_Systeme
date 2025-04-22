@@ -69,8 +69,8 @@ export default function TeacherForm({
             setOpen(false)
             router.refresh()
         } else if (state?.error) {
-            toast.error(`Failed to ${type === "create" ? "create" : "update"} teacher: ${state.error}`)
-            console.error("Form action error:", state.error)
+            toast.error(state.error || `Failed to ${type === "create" ? "create" : "update"} teacher`)
+            //console.error("Form action error:", state.error)
         }
     }, [state, type, router, setOpen])
 

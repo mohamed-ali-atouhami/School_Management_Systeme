@@ -73,7 +73,7 @@ export default function AssignmentForm({ type, data, setOpen, relatedData }: { t
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-8">
 
-                <span className="text-xs text-gray-400 font-medium">Exam Details</span>
+                <span className="text-xs text-gray-400 font-medium">Assignment Details</span>
                 <div className="flex justify-between flex-wrap gap-4">
                     <InputFields type="text" label="Title" placeholder="title" control={form.control} name="title"   />
                 </div>

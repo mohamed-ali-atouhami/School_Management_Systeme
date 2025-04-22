@@ -63,14 +63,14 @@ const renderRow = (role?: string) => (result: Results) => {
     return (
         <tr key={result.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
             <td className="flex items-center gap-4 p-4">
-                {result.title}
+                {result?.title}
             </td>
-            <td >{result.studentName} {result.studentSurName}</td>
-            <td className="hidden lg:table-cell">{result.score}</td>
-            <td className="hidden md:table-cell">{result.teacherName} {result.teacherSurName}</td>
-            <td className="hidden md:table-cell">{result.className}</td>
-            <td className="hidden lg:table-cell">{new Intl.DateTimeFormat("GMT").format(result.startTime)}</td>
-            <td className="hidden lg:table-cell">{result.type}</td>
+            <td >{result?.studentName} {result?.studentSurName}</td>
+            <td className="hidden lg:table-cell">{result?.score}</td>
+            <td className="hidden md:table-cell">{result?.teacherName} {result?.teacherSurName}</td>
+            <td className="hidden md:table-cell">{result?.className}</td>
+            <td className="hidden lg:table-cell">{new Intl.DateTimeFormat("GMT").format(result?.startTime)}</td>
+            <td className="hidden lg:table-cell">{result?.type}</td>
             <td>
                 <div className="flex items-center gap-2">
                     {(role === "admin" || role === "teacher") && 
@@ -201,7 +201,7 @@ export default async function ResultsListPage({ searchParams }: { searchParams: 
             score:item.score,
             
         }
-    })
+    }).filter(Boolean)
     return (
         <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
             {/* top */}
