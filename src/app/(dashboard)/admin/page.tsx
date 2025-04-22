@@ -1,5 +1,5 @@
 import UserCard from "@/components/UserCard";
-import { FinanceChart } from "@/components/FinanceChart";
+import { UserActivityChart } from "@/components/UserActivityChart";
 import Announcement from "@/components/Announcement";
 import CountChartContainer from "@/components/CountChartContainer";
 import AttendanceChartContainer from "@/components/AttendanceChartContainer";
@@ -28,7 +28,7 @@ export default function AdminPage({searchParams}: {searchParams: {[keys: string]
         </div>
         {/*Bottom Chart*/}
         <div className="w-full h-[500px]">
-          <FinanceChart />
+          <UserActivityChart />
         </div>
       </div>
       {/* right side */}

@@ -11,7 +11,7 @@ interface ChartData {
     loginCount: number
 }
 
-export function FinanceChart() {
+export function UserActivityChart() {
     const [chartData, setChartData] = useState<ChartData[]>([])
 
     useEffect(() => {
