@@ -37,33 +37,40 @@ const getColumns = (role?: string) => [
     }] : []),
 
 ]
-const renderRow = (role?: string) => (classes: Classes) => {
-    return (
-        <tr key={classes.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
-            <td className="flex items-center gap-4 p-4">
-                {classes?.name}
-            </td>
-            <td className="hidden md:table-cell">{classes?.capacity}</td>
-            <td className="hidden md:table-cell">{classes?.grade?.level}</td>
-            <td className="hidden md:table-cell">{classes?.supervisor?.name}</td>
-            <td>
-                <div className="flex items-center gap-2">
-                    {role === "admin" &&
-                        <>
-                            <FormContainer table="classes" type="edit" data={classes} />
-                            <FormContainer table="classes" type="delete" id={classes.id} />
-                        </>
-                    }
-                </div>
-            </td>
-        </tr>
-    )
-}
-
-export default async function ClassesListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+const renderRow = (role?: string) => {
+    const ClassRow = (classes: Classes) => {
+        return (
+            <tr key={classes.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
+                <td className="flex items-center gap-4 p-4">
+                    {classes?.name}
+                </td>
+                <td className="hidden md:table-cell">{classes?.capacity}</td>
+                <td className="hidden md:table-cell">{classes?.grade?.level}</td>
+                <td className="hidden md:table-cell">{classes?.supervisor?.name}</td>
+                <td>
+                    <div className="flex items-center gap-2">
+                        {role === "admin" &&
+                            <>
+                                <FormContainer table="classes" type="edit" data={classes} />
+                                <FormContainer table="classes" type="delete" id={classes.id} />
+                            </>
+                        }
+                    </div>
+                </td>
+            </tr>
+        )
+    };
+    ClassRow.displayName = 'ClassRow';
+    return ClassRow;
+};
+interface Props {
+    searchParams: Promise<{ [key: string]: string | undefined }>
+  }
+export default async function ClassesListPage({ searchParams }: Props) {
+    const resolvedParams = await searchParams;
     const { sessionClaims } = await auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
-    const { page, ...queryparams } = searchParams;
+    const { page, ...queryparams } = resolvedParams;
     const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
     const query: Prisma.ClassWhereInput = {};
@@ -121,7 +128,7 @@ export default async function ClassesListPage({ searchParams }: { searchParams: 
                 </div>
             </div>
             {/* list */}
-            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={classesData} />
+            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={classesData as Classes[]} />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />
         </div>

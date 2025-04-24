@@ -37,36 +37,43 @@ const getColumns = (role?: string) => [
 
 ]
 
-const renderRow = (role?: string) => (parent: Parents) => {
-    return (
-        <tr key={parent.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
-            <td className="flex items-center gap-4 p-4">
-                <div className="flex flex-col">
-                    <h3 className="font-semibold">{parent.name}</h3>
-                    <p className="text-xs text-gray-500">{parent.email}</p>
-                </div>
-            </td>
-            <td className="hidden md:table-cell">{parent.students.map(student => student.name).join(", ")}</td>
-            <td className="hidden md:table-cell">{parent.phone}</td>
-            <td className="hidden lg:table-cell">{parent.address}</td>
-            <td>
-                <div className="flex items-center gap-2">
-                    {role === "admin" &&
-                        <>
-                            <FormContainer table="parents" type="edit" data={parent} />
-                            <FormContainer table="parents" type="delete" id={parent.id} />
-                        </>
-                    }
-                </div>
-            </td>
-        </tr>
-    )
+const renderRow = (role?: string) => {
+    const ParentRow = (parent: Parents) => {
+        return (
+            <tr key={parent.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
+                <td className="flex items-center gap-4 p-4">
+                    <div className="flex flex-col">
+                        <h3 className="font-semibold">{parent.name}</h3>
+                        <p className="text-xs text-gray-500">{parent.email}</p>
+                    </div>
+                </td>
+                <td className="hidden md:table-cell">{parent.students.map(student => student.name).join(", ")}</td>
+                <td className="hidden md:table-cell">{parent.phone}</td>
+                <td className="hidden lg:table-cell">{parent.address}</td>
+                <td>
+                    <div className="flex items-center gap-2">
+                        {role === "admin" &&
+                            <>
+                                <FormContainer table="parents" type="edit" data={parent} />
+                                <FormContainer table="parents" type="delete" id={parent.id} />
+                            </>
+                        }
+                    </div>
+                </td>
+            </tr>
+        )
+    };
+    ParentRow.displayName = 'ParentRow';
+    return ParentRow;
+};
+interface Props {
+    searchParams: Promise<{ [key: string]: string | undefined }>
 }
-
-export default async function ParentsListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+export default async function ParentsListPage({ searchParams }: Props) {
+    const resolvedParams = await searchParams;
     const { sessionClaims } = await auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
-    const { page, ...queryparams } = searchParams;
+    const { page, ...queryparams } = resolvedParams;
     const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
     const query: Prisma.ParentWhereInput = {};
@@ -121,7 +128,7 @@ export default async function ParentsListPage({ searchParams }: { searchParams: 
                 </div>
             </div>
             {/* list */}
-            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={parentsData} />
+            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={parentsData as Parents[]} />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />
         </div>

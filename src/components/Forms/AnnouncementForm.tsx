@@ -22,11 +22,11 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 
-export default function AnnouncementForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: { classes: { id: number, name: string }[] } }) {
+export default function AnnouncementForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: AnnouncementSchema, setOpen: (open: boolean) => void, relatedData?: { classes: { id: number, name: string }[] } }) {
     const form = useForm<AnnouncementSchema>({
         resolver: zodResolver(announcementSchema),
         defaultValues: {
-            id: data?.id || "",
+            id: data?.id || undefined,
             title: data?.title || "",
             description: data?.description || "",
             date: data?.date,

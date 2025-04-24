@@ -4,7 +4,7 @@ import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
-import { Class, Lesson,Teacher, Prisma, Subject } from "@prisma/client";
+import { Class, Lesson, Teacher, Prisma, Subject } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
 import FormContainer from "@/components/Forms/FormContainer";
 
@@ -35,33 +35,40 @@ const getColumns = (role?: string) => [
 
 ]
 
-const renderRow = (role?: string) => (lesson: Lessons) => {
-    return (
-        <tr key={lesson.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
-            <td className="flex items-center gap-4 p-4">
-                {lesson.subject.name}
-            </td>
-            <td className="hidden md:table-cell">{lesson.class.name}</td>
-            <td className="hidden md:table-cell">{lesson.teacher.name} {lesson.teacher.surname}</td>
-            <td>
-                <div className="flex items-center gap-2">
-                    {role === "admin" && 
-                    <>
-                        <FormContainer table="lessons" type="edit" data={lesson} />
-                        <FormContainer table="lessons" type="delete" id={lesson.id} />
-                    </>
-                    }
-                </div>
-            </td>
-        </tr>
-    )
+const renderRow = (role?: string) => {
+    const LessonRow = (lesson: Lessons) => {
+        return (
+            <tr key={lesson.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
+                <td className="flex items-center gap-4 p-4">
+                    {lesson.subject.name}
+                </td>
+                <td className="hidden md:table-cell">{lesson.class.name}</td>
+                <td className="hidden md:table-cell">{lesson.teacher.name} {lesson.teacher.surname}</td>
+                <td>
+                    <div className="flex items-center gap-2">
+                        {role === "admin" &&
+                            <>
+                                <FormContainer table="lessons" type="edit" data={lesson} />
+                                <FormContainer table="lessons" type="delete" id={lesson.id} />
+                            </>
+                        }
+                    </div>
+                </td>
+            </tr>
+        )
+    };
+    LessonRow.displayName = 'LessonRow';
+    return LessonRow;
+};
+interface Props {
+    searchParams: Promise<{ [key: string]: string | undefined }>
 }
-
-export default async function LessonsListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
-    const { sessionClaims ,userId} = await auth();
+export default async function LessonsListPage({ searchParams }: Props) {
+    const resolvedParams = await searchParams;
+    const { sessionClaims, userId } = await auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
     const currentUserId = userId!;
-    const { page, ...queryparams } = searchParams;
+    const { page, ...queryparams } = resolvedParams;
     const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
     const query: Prisma.LessonWhereInput = {};
@@ -89,7 +96,8 @@ export default async function LessonsListPage({ searchParams }: { searchParams: 
         case "teacher":
             query.teacherId = currentUserId;
             break;
-            query.class = { 
+        case "student":
+            query.class = {
                 students: {
                     some: {
                         parentId: currentUserId
@@ -104,9 +112,9 @@ export default async function LessonsListPage({ searchParams }: { searchParams: 
         prisma.lesson.findMany({
             where: query,
             include: {
-                subject: {select: {name: true}},
-                class: {select: {name: true}},
-                teacher: {select: {name: true, surname: true}},
+                subject: { select: { name: true } },
+                class: { select: { name: true } },
+                teacher: { select: { name: true, surname: true } },
             },
             orderBy: {
                 createdAt: "desc"
@@ -132,16 +140,16 @@ export default async function LessonsListPage({ searchParams }: { searchParams: 
                         <button className="w-8 h-8 rounded-full bg-medaliYellow flex items-center justify-center">
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
-                        {role === "admin" && 
-                        <>
-                            <FormContainer table="lessons" type="create" />
-                        </>
+                        {role === "admin" &&
+                            <>
+                                <FormContainer table="lessons" type="create" />
+                            </>
                         }
                     </div>
                 </div>
             </div>
             {/* list */}
-            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={lessonsData} />
+            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={lessonsData as Lessons[]} />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />
         </div>

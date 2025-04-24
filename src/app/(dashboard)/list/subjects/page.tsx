@@ -2,7 +2,6 @@ import TableSearch from "@/components/TableSearch";
 import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import FormModal from "@/components/FormModal";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Prisma, Subject, Teacher } from "@prisma/client";
@@ -26,31 +25,41 @@ const getColumns = (role?: string) => [
         accessor: "actions",
     }] : []),
 ]
-const renderRow = (role?: string) => (subject: Subjects) => {
-    return (
-        <tr key={subject.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
-            <td className="flex items-center gap-4 p-4">
-                {subject.name}
-            </td>
-            <td className="hidden md:table-cell">{subject.teachers.map(teacher => teacher.name).join(", ")}</td>
-            <td>
-                <div className="flex items-center gap-2">
-                    {role === "admin" && 
-                    <>
-                        <FormContainer table="subjects" type="edit" data={subject} />
-                        <FormContainer table="subjects" type="delete" id={subject.id} />
-                    </>
-                    }
-                </div>
-            </td>
-        </tr>
-    )
-}
 
-export default async function SubjectsListPage({searchParams}: {searchParams:{[key:string]: string | undefined}}) {
+getColumns.displayName = 'getColumns';
+
+const renderRow = (role?: string) => {
+    const SubjectRow = (subject: Subjects) => {
+        return (
+            <tr key={subject.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
+                <td className="flex items-center gap-4 p-4">
+                    {subject.name}
+                </td>
+                <td className="hidden md:table-cell">{subject.teachers.map(teacher => teacher.name).join(", ")}</td>
+                <td>
+                    <div className="flex items-center gap-2">
+                        {role === "admin" &&
+                            <>
+                                <FormContainer table="subjects" type="edit" data={subject} />
+                                <FormContainer table="subjects" type="delete" id={subject.id} />
+                            </>
+                        }
+                    </div>
+                </td>
+            </tr>
+        )
+    };
+    SubjectRow.displayName = 'SubjectRow';
+    return SubjectRow;
+};
+interface Props {
+    searchParams: Promise<{ [key: string]: string | undefined }>
+}
+export default async function SubjectsListPage({ searchParams }: Props) {
+    const resolvedParams = await searchParams;
     const { sessionClaims } = await auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
-    const { page, ...queryparams } = searchParams;
+    const { page, ...queryparams } = resolvedParams;
     const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
     const query: Prisma.SubjectWhereInput = {};
@@ -82,13 +91,6 @@ export default async function SubjectsListPage({searchParams}: {searchParams:{[k
             where: query,
         }),
     ]);
-    // const relatedData = await prisma.teacher.findMany({
-    //     select: {
-    //         id: true,
-    //         name: true,
-    //         surname: true
-    //     }
-    // })
     return (
         <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
             {/* top */}
@@ -103,16 +105,16 @@ export default async function SubjectsListPage({searchParams}: {searchParams:{[k
                         <button className="w-8 h-8 rounded-full bg-medaliYellow flex items-center justify-center">
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
-                        {role === "admin" && 
-                        <>
-                            <FormContainer table="subjects" type="create" />
-                        </>
+                        {role === "admin" &&
+                            <>
+                                <FormContainer table="subjects" type="create" />
+                            </>
                         }
                     </div>
                 </div>
             </div>
             {/* list */}
-            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={subjectsData} />
+            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={subjectsData as Subjects[]} />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />
         </div>

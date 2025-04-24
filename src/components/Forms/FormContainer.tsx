@@ -1,12 +1,25 @@
 import prisma from "@/lib/prisma"
 import FormModal from "../FormModal"
 import { auth } from "@clerk/nextjs/server"
+
+type RelatedData = {
+    teachers?: { id: string, name: string, surname: string }[];
+    grades?: { id: number, level: string }[];
+    subjects?: { id: number, name: string }[];
+    classes?: { id: number, name: string, _count?: { students: number } }[];
+    parents?: { id: string, name: string, surname: string }[];
+    students?: { id: string, name: string, surname: string, class?: { name: string } }[];
+    lessons?: { id: number, name: string, class?: { name: string } }[];
+    exams?: { id: number, title: string }[];
+    assignments?: { id: number, title: string }[];
+}
+
 export type FormContainerProps = {
     table: "students" | "teachers" | "parents" | "classes" | "exams" | "assignments" | "results" | "events" | "announcements" | "attendances" | "lessons" | "subjects",
     type: "create" | "edit" | "delete",
-    data?: any,
+    data?: Record<string, unknown> | null,
     id?: number | string,
-    relatedData?: any
+    relatedData?: RelatedData
 }
 
 export default async function FormContainer({ table, type, data, id, relatedData }: FormContainerProps) {

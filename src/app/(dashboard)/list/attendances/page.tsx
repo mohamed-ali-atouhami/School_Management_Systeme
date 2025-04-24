@@ -37,35 +37,42 @@ const getColumns = (role?: string) => [
     }] : []),
 ];
 
-const renderRow = (role?: string) => (attendance: Attendances) => {
-    return (
-        <tr key={attendance.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
-            <td className="flex items-center gap-4 p-4">
-                {attendance.student.name} {attendance.student.surname}
-            </td>
-            <td>{attendance.lesson.name}</td>
-            <td className="hidden lg:table-cell">{new Date(attendance.date).toLocaleString("GMT", { day: "2-digit", month: "2-digit", year: "numeric" })}</td>
-            <td>{attendance.present === true ? "Present" : "Absent"}</td>
-            <td>
-                <div className="flex items-center gap-2">
-                    {(role === "admin" || role === "teacher") &&
-                        <>
-                            <FormContainer table="attendances" type="edit" data={attendance} />
-                            <FormContainer table="attendances" type="delete" id={attendance.id} />
-                        </>
-                    }
-                </div>
-            </td>
-        </tr>
-    )
+const renderRow = (role?: string) => {
+    const AttendanceRow = (attendance: Attendances) => {
+        return (
+            <tr key={attendance.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
+                <td className="flex items-center gap-4 p-4">
+                    {attendance.student.name} {attendance.student.surname}
+                </td>
+                <td>{attendance.lesson.name}</td>
+                <td className="hidden lg:table-cell">{new Date(attendance.date).toLocaleString("GMT", { day: "2-digit", month: "2-digit", year: "numeric" })}</td>
+                <td>{attendance.present === true ? "Present" : "Absent"}</td>
+                <td>
+                    <div className="flex items-center gap-2">
+                        {(role === "admin" || role === "teacher") &&
+                            <>
+                                <FormContainer table="attendances" type="edit" data={attendance} />
+                                <FormContainer table="attendances" type="delete" id={attendance.id} />
+                            </>
+                        }
+                    </div>
+                </td>
+            </tr>
+        )
+    };
+    AttendanceRow.displayName = 'AttendanceRow';
+    return AttendanceRow;
 };
-
-export default async function AttendancesListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+interface Props {
+    searchParams: Promise<{ [key: string]: string | undefined }>
+  }
+export default async function AttendancesListPage({ searchParams }: Props) {
+    const resolvedParams = await searchParams;
     const { sessionClaims, userId } = await auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
     const currentUserId = userId!;
 
-    const { page, ...queryparams } = searchParams;
+    const { page, ...queryparams } = resolvedParams;
     const pageNumber = page ? Number(page) : 1;
     
     // URL PARAMS CONDITIONS
@@ -156,7 +163,7 @@ export default async function AttendancesListPage({ searchParams }: { searchPara
             <Table
                 columns={getColumns(role)}
                 renderRow={renderRow(role)}
-                data={attendancesData}
+                data={attendancesData as Attendances[]}
             />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />

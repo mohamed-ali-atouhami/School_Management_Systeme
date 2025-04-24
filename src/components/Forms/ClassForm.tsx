@@ -19,14 +19,15 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-export default function ClassForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: any }) {
+export default function ClassForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: ClassSchema, setOpen: (open: boolean) => void, relatedData?: { teachers: {id: string, name: string, surname: string}[], grades: {id: number, level: string}[] } }) {
     const form = useForm<ClassSchema>({
         resolver: zodResolver(classSchema),
         defaultValues: {
-            className: data?.name || "",
-            capacity: data?.capacity || "",
+            id: data?.id || undefined,
+            className: data?.className || "",
+            capacity: data?.capacity || 0,
             gradeId: data?.gradeId || 0,
-            supervisorId: data?.supervisorId || "",
+            supervisorId: data?.supervisorId || undefined,
         },
     })
     const [isPending, startTransition] = useTransition()
@@ -41,7 +42,7 @@ export default function ClassForm({ type, data, setOpen, relatedData }: { type: 
         } else if (state?.error === true) {
             toast.error(`Failed to ${type === "create" ? "create" : "update"} class!`)
         }
-    }, [state, type, form, router])
+    }, [state, type, form, router, setOpen])
     function onSubmit(values: ClassSchema) {
         const payload = {
             id: data?.id, // Include id for updates

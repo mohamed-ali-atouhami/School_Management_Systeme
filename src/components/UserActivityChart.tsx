@@ -1,14 +1,15 @@
 "use client"
 
 import Image from "next/image"
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { CartesianGrid, Legend, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { getUserLoginStatistics } from "@/lib/Actions"
 import { useEffect, useState } from "react"
 
 interface ChartData {
     month: string
     year: number
-    loginCount: number
+    signInCount: number
+    activeCount: number
 }
 
 export function UserActivityChart() {
@@ -32,12 +33,13 @@ export function UserActivityChart() {
             </div>
             <div className="w-full h-[90%]">
                 <ResponsiveContainer>
-                    <LineChart
-                        accessibilityLayer
+                    <BarChart
                         data={chartData}
                         margin={{
                             left: 12,
                             right: 12,
+                            top: 20,
+                            bottom: 5,
                         }}
                     >
                         <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -54,18 +56,35 @@ export function UserActivityChart() {
                             tick={{ fill: "#d1d5db" }}
                             tickMargin={20}
                         />
-                        <Tooltip contentStyle={{ borderRadius: "10px", borderColor: "#d1d5db" }} />
-
-                        <Legend align="center" verticalAlign="top" wrapperStyle={{ paddingTop: "10px", paddingBottom: "30px" }} />
-                        <Line
-                            dataKey="loginCount"
-                            name="Logins"
-                            type="monotone"
-                            stroke="#C3EBFA"
-                            strokeWidth={4}
-                            dot={false}
+                        <Tooltip 
+                            contentStyle={{ 
+                                borderRadius: "10px", 
+                                borderColor: "#d1d5db",
+                                backgroundColor: "white"
+                            }} 
                         />
-                    </LineChart>
+                        <Legend 
+                            align="center" 
+                            verticalAlign="top" 
+                            wrapperStyle={{ 
+                                paddingTop: "10px", 
+                                paddingBottom: "30px" 
+                            }}
+                            iconType="circle"
+                        />
+                        <Bar
+                            dataKey="signInCount"
+                            name="Sign-ins"
+                            fill="#C3EBFA"
+                            radius={[10, 10, 0, 0]}
+                        />
+                        <Bar
+                            dataKey="activeCount"
+                            name="Active Sessions"
+                            fill="#CFCEFF"
+                            radius={[10, 10, 0, 0]}
+                        />
+                    </BarChart>
                 </ResponsiveContainer>
             </div>
         </div>

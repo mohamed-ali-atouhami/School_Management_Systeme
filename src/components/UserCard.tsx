@@ -1,14 +1,21 @@
 import prisma from "@/lib/prisma";
 import Image from "next/image";
 
+type ModelCount = {
+    admin: () => Promise<number>;
+    student: () => Promise<number>;
+    teacher: () => Promise<number>;
+    parent: () => Promise<number>;
+};
+
 export default async function UserCard({ type }: { type: "admin" | "student" | "teacher" | "parent" }) {
-  const modelMap : Record<typeof type, any> = {
-    admin: prisma.admin,
-    student: prisma.student,
-    teacher: prisma.teacher,
-    parent: prisma.parent,
+  const modelMap: ModelCount = {
+    admin: () => prisma.admin.count(),
+    student: () => prisma.student.count(),
+    teacher: () => prisma.teacher.count(),
+    parent: () => prisma.parent.count(),
   };
-  const data = await modelMap[type].count();
+  const data = await modelMap[type]();
   return (
     <div className="rounded-2xl odd:bg-medaliPurple even:bg-medaliYellow p-4 flex-1 min-w-[130px]">
       <div className="flex justify-between items-center">

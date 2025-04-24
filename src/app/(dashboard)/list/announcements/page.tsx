@@ -31,34 +31,41 @@ const getColumns = (role?: string) => [
     }] : []),
 ];
 
-const renderRow = (role?: string) => (announcement: Announcements) => {
-    return (
-        <tr key={announcement.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
-            <td className="flex items-center gap-4 p-4">
-                {announcement.title}
-            </td>
-            <td>{announcement.class?.name || "-"}</td>
-            <td className="hidden lg:table-cell">{new Date(announcement.date).toLocaleString("GMT", { day: "2-digit", month: "2-digit", year: "numeric" })}</td>
-            <td>
-                <div className="flex items-center gap-2">
-                    {role === "admin" &&
-                        <>
-                            <FormContainer table="announcements" type="edit" data={announcement} />
-                            <FormContainer table="announcements" type="delete" id={announcement.id} />
-                        </>
-                    }
-                </div>
-            </td>
-        </tr>
-    )
+const renderRow = (role?: string) => {
+    const AnnouncementRow = (announcement: Announcements) => {
+        return (
+            <tr key={announcement.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
+                <td className="flex items-center gap-4 p-4">
+                    {announcement.title}
+                </td>
+                <td>{announcement.class?.name || "-"}</td>
+                <td className="hidden lg:table-cell">{new Date(announcement.date).toLocaleString("GMT", { day: "2-digit", month: "2-digit", year: "numeric" })}</td>
+                <td>
+                    <div className="flex items-center gap-2">
+                        {role === "admin" &&
+                            <>
+                                <FormContainer table="announcements" type="edit" data={announcement} />
+                                <FormContainer table="announcements" type="delete" id={announcement.id} />
+                            </>
+                        }
+                    </div>
+                </td>
+            </tr>
+        )
+    };
+    AnnouncementRow.displayName = 'AnnouncementRow';
+    return AnnouncementRow;
 };
-
-export default async function AnnouncementsListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+interface Props {
+    searchParams: Promise<{ [key: string]: string | undefined }>
+  }
+export default async function AnnouncementsListPage({ searchParams }: Props) {
+    const resolvedParams = await searchParams;
     const { sessionClaims ,userId} = await auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
     const currentUserId = userId!;
 
-    const { page, ...queryparams } = searchParams;
+    const { page, ...queryparams } = resolvedParams;
     const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
     const query: Prisma.AnnouncementWhereInput = {};
@@ -158,7 +165,7 @@ export default async function AnnouncementsListPage({ searchParams }: { searchPa
             <Table
                 columns={getColumns(role)}
                 renderRow={renderRow(role)}
-                data={announcementsData}
+                data={announcementsData as Announcements[]}
             />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />

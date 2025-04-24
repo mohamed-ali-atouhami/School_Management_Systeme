@@ -18,12 +18,12 @@ import { useActionState } from "react"
 import { createParent, updateParent } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import MultiSelect from 'react-select';
-export default function ParentForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: { students?: { id: string ; name: string; surname: string}[] } }) {
+import MultiSelect, { MultiValue } from 'react-select';
+export default function ParentForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: ParentSchema, setOpen: (open: boolean) => void, relatedData?: { students?: { id: string; name: string; surname: string }[] } }) {
     const form = useForm<ParentSchema>({
         resolver: zodResolver(parentSchema),
         defaultValues: {
-            id: data?.id || "",
+            id: data?.id || undefined,
             username: data?.username || "",
             email: data?.email || "",
             password: data?.password || "",
@@ -31,9 +31,7 @@ export default function ParentForm({ type, data, setOpen, relatedData }: { type:
             surname: data?.surname || "",
             phone: data?.phone || "",
             address: data?.address || "",
-            students: data?.students.map((student: any) => ({
-                id: student.id.toString(),
-            })) || [],
+            students: data?.students || [],
         },
     })
 
@@ -92,9 +90,9 @@ export default function ParentForm({ type, data, setOpen, relatedData }: { type:
                     <InputFields type="text" label="Last Name" placeholder="last name" control={form.control} name="surname" />
                     <InputFields type="text" label="Phone" placeholder="phone" control={form.control} name="phone" />
                     <InputFields type="text" label="Address" placeholder="address" control={form.control} name="address" />
-                    
+
                     <div className="flex flex-col gap-2 w-full md:w-1/2">
-                    <FormField
+                        <FormField
                             control={form.control}
                             name="students"
                             render={({ field }) => (
@@ -103,17 +101,16 @@ export default function ParentForm({ type, data, setOpen, relatedData }: { type:
                                     <FormControl>
                                         <MultiSelect
                                             options={studentOptions}
-                                            value={studentOptions.filter((option: any) => 
+                                            value={studentOptions.filter((option: { value: string, label: string }) =>
                                                 field.value?.includes(option.value)
                                             )}
-                                            onChange={(newValue: any) => {
-                                                field.onChange(newValue.map((v: any) => v.value))
+                                            onChange={(newValue: MultiValue<{ value: string, label: string }>) => {
+                                                field.onChange(newValue.map((v: { value: string, label: string }) => v.value))
                                             }}
                                             isMulti
                                             className="basic-multi-select"
                                             classNamePrefix="select"
                                             placeholder="students"
-                                            defaultValue={data?.students.map((student: any) => student.id.toString())}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -121,7 +118,14 @@ export default function ParentForm({ type, data, setOpen, relatedData }: { type:
                             )}
                         />
                     </div>
-                    {/* <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
+
+                </div>
+                <Button type="submit" disabled={isPending}>{isPending ? type === "create" ? "Creating..." : "Updating..." : type === "create" ? "Create" : "Update"}</Button>
+            </form>
+        </Form>
+    )
+}
+{/* <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
                         <FormField
                             control={form.control}
                             name="image"
@@ -150,9 +154,3 @@ export default function ParentForm({ type, data, setOpen, relatedData }: { type:
                             )}
                         />
                     </div> */}
-                </div>
-                <Button type="submit" disabled={isPending}>{isPending ? type === "create" ? "Creating..." : "Updating..." : type === "create" ? "Create" : "Update"}</Button>
-            </form>
-        </Form>
-    )
-}

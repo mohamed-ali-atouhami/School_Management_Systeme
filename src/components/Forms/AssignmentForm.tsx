@@ -22,11 +22,11 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 
-export default function AssignmentForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: { lessons: { id: number, name: string }[] } }) {
+export default function AssignmentForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: AssignmentSchema, setOpen: (open: boolean) => void, relatedData?: { lessons: { id: number, name: string }[] } }) {
     const form = useForm<AssignmentSchema>({
         resolver: zodResolver(assignmentSchema),
         defaultValues: {
-            id: data?.id || "",
+            id: data?.id || undefined,
             title: data?.title || "",
             startDate: data?.startDate,
             dueDate: data?.dueDate ,

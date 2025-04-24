@@ -150,6 +150,7 @@ export async function createTeacher(currentState: CurrentState, formData: Teache
                 password: formData.password,
                 firstName: formData.name,
                 lastName: formData.surname,
+                skipPasswordChecks: true
             })
         } catch (clerkError) {
             console.error('Clerk user creation failed:', clerkError)
@@ -402,6 +403,7 @@ export async function createStudent(currentState: CurrentState, formData: Studen
                 password: formData.password,
                 firstName: formData.name,
                 lastName: formData.surname,
+                //skipPasswordChecks: true 
             })
         } catch (clerkError) {
             console.error('Clerk user creation failed:', clerkError)
@@ -592,6 +594,7 @@ export async function createParent(currentState: CurrentState, formData: ParentS
                 password: formData.password,
                 firstName: formData.name,
                 lastName: formData.surname,
+                skipPasswordChecks: true
             })
         } catch (clerkError) {
             console.error('Clerk user creation failed:', clerkError)
@@ -1366,13 +1369,17 @@ export async function getUserLoginStatistics() {
             return {
                 month: date.toLocaleString('default', { month: 'short' }),
                 year: date.getFullYear(),
-                loginCount: 0
+                signInCount: 0,
+                activeCount: 0
             }
         }).reverse()
 
-        // Count logins for each month
+        // Count sign-ins and active sessions for each month
         for (const user of users) {
             const lastSignIn = user.lastSignInAt
+            const lastActive = user.lastActiveAt
+
+            // Count sign-ins
             if (lastSignIn) {
                 const signInDate = new Date(lastSignIn)
                 const monthIndex = months.findIndex(m => 
@@ -1380,11 +1387,22 @@ export async function getUserLoginStatistics() {
                     m.year === signInDate.getFullYear()
                 )
                 if (monthIndex !== -1) {
-                    months[monthIndex].loginCount++
+                    months[monthIndex].signInCount++
+                }
+            }
+
+            // Count active sessions
+            if (lastActive) {
+                const activeDate = new Date(lastActive)
+                const monthIndex = months.findIndex(m => 
+                    m.month === activeDate.toLocaleString('default', { month: 'short' }) &&
+                    m.year === activeDate.getFullYear()
+                )
+                if (monthIndex !== -1) {
+                    months[monthIndex].activeCount++
                 }
             }
         }
-
         return { success: true, data: months }
     } catch (error) {
         console.error('Error fetching user login statistics:', error)

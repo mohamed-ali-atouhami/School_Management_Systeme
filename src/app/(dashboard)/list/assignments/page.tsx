@@ -39,34 +39,41 @@ const getColumns = (role?: string) => [
     }] : []),
 
 ]
-const renderRow = (role?: string) => (assignment: Assignments) => {
-    return (
-        <tr key={assignment.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
-            <td className="flex items-center gap-4 p-4">
-                {assignment.lesson.subject.name}
-            </td>
-            <td>{assignment.lesson.class.name}</td>
-            <td className="hidden md:table-cell">{assignment.lesson.teacher.name} {assignment.lesson.teacher.surname}</td>
-            <td className="hidden md:table-cell">{new Date(assignment.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</td>
-            <td>
-                <div className="flex items-center gap-2">
-                    {(role === "admin" || role === "teacher") &&
-                    <>
-                        <FormContainer table="assignments" type="edit" data={assignment} />
-                        <FormContainer table="assignments" type="delete" id={assignment.id} />
-                    </>
-                    }
-                </div>
-            </td>
-        </tr>
-    )
-}
-
-export default async function AssignmentsListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+const renderRow = (role?: string) => {
+    const AssignmentRow = (assignment: Assignments) => {
+        return (
+            <tr key={assignment.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
+                <td className="flex items-center gap-4 p-4">
+                    {assignment.lesson.subject.name}
+                </td>
+                <td>{assignment.lesson.class.name}</td>
+                <td className="hidden md:table-cell">{assignment.lesson.teacher.name} {assignment.lesson.teacher.surname}</td>
+                <td className="hidden md:table-cell">{new Date(assignment.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</td>
+                <td>
+                    <div className="flex items-center gap-2">
+                        {(role === "admin" || role === "teacher") &&
+                        <>
+                            <FormContainer table="assignments" type="edit" data={assignment} />
+                            <FormContainer table="assignments" type="delete" id={assignment.id} />
+                        </>
+                        }
+                    </div>
+                </td>
+            </tr>
+        )
+    };
+    AssignmentRow.displayName = 'AssignmentRow';
+    return AssignmentRow;
+};
+interface Props {
+    searchParams: Promise<{ [key: string]: string | undefined }>
+  }
+export default async function AssignmentsListPage({ searchParams }: Props) {
+    const resolvedParams = await searchParams;
     const { sessionClaims ,userId} = await auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
     const currentUserId = userId!;
-    const { page, ...queryparams } = searchParams;
+    const { page, ...queryparams } = resolvedParams;
     const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
     const query: Prisma.AssignmentWhereInput = {};
@@ -161,7 +168,7 @@ export default async function AssignmentsListPage({ searchParams }: { searchPara
                 </div>
             </div>
             {/* list */}
-            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={assignmentsData} />
+            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={assignmentsData as Assignments[]} />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />
         </div>

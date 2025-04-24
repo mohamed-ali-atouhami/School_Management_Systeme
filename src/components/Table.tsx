@@ -1,9 +1,9 @@
-export default function Table(
+export default function Table<T extends Record<string, unknown>>(
     { columns, renderRow, data }:
         {
             columns: { header: string, accessor: string, className?: string }[],
-            renderRow: (row: any) => React.ReactNode,
-            data: any[]
+            renderRow: (row: T) => React.ReactNode,
+            data: T[]
         }
 ) {
     return (

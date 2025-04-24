@@ -39,37 +39,44 @@ const getColumns = (role?: string) => [
     }] : []),
 
 ]
-const renderRow = (role?: string) => (exam: Exams) => {
-    return (
-        <tr key={exam.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
-            <td className="flex items-center gap-4 p-4">
-                {exam.lesson.subject.name}
-            </td>
-            <td>{exam.lesson.class.name}</td>
-            <td className="hidden md:table-cell">{exam.lesson.teacher.name} {exam.lesson.teacher.surname}</td>
-            <td className="hidden md:table-cell">
-                {new Date(exam.startTime).toLocaleDateString('GMT', { day: '2-digit', month: '2-digit', year: 'numeric' })} {' '}
-                {new Date(exam.startTime).toLocaleTimeString('GMT', { hour: '2-digit', minute: '2-digit', hour12: false })} - {new Date(exam.endTime).toLocaleTimeString('GMT', { hour: '2-digit', minute: '2-digit', hour12: false })}
-            </td>
-            <td>
-                <div className="flex items-center gap-2">
-                    {(role === "admin" || role === "teacher") && 
-                    <>
-                        <FormContainer table="exams" type="edit" data={exam} />
-                        <FormContainer table="exams" type="delete" id={exam.id} />
-                    </>
-                    }
-                </div>
-            </td>
-        </tr>
-    )
-}
-
-export default async function ExamsListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+const renderRow = (role?: string) => {
+    const ExamRow = (exam: Exams) => {
+        return (
+            <tr key={exam.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
+                <td className="flex items-center gap-4 p-4">
+                    {exam.lesson.subject.name}
+                </td>
+                <td>{exam.lesson.class.name}</td>
+                <td className="hidden md:table-cell">{exam.lesson.teacher.name} {exam.lesson.teacher.surname}</td>
+                <td className="hidden md:table-cell">
+                    {new Date(exam.startTime).toLocaleDateString('GMT', { day: '2-digit', month: '2-digit', year: 'numeric' })} {' '}
+                    {new Date(exam.startTime).toLocaleTimeString('GMT', { hour: '2-digit', minute: '2-digit', hour12: false })} - {new Date(exam.endTime).toLocaleTimeString('GMT', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                </td>
+                <td>
+                    <div className="flex items-center gap-2">
+                        {(role === "admin" || role === "teacher") && 
+                        <>
+                            <FormContainer table="exams" type="edit" data={exam} />
+                            <FormContainer table="exams" type="delete" id={exam.id} />
+                        </>
+                        }
+                    </div>
+                </td>
+            </tr>
+        )
+    };
+    ExamRow.displayName = 'ExamRow';
+    return ExamRow;
+};
+interface Props {
+    searchParams: Promise<{ [key: string]: string | undefined }>
+  }
+export default async function ExamsListPage({ searchParams }: Props) {
+    const resolvedParams = await searchParams;
     const { sessionClaims ,userId} = await auth();
     const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
     const currentUserId = userId!;
-    const { page, ...queryparams } = searchParams;
+    const { page, ...queryparams } = resolvedParams;
     const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
     const query: Prisma.ExamWhereInput = {};
@@ -164,7 +171,7 @@ export default async function ExamsListPage({ searchParams }: { searchParams: { 
                 </div>
             </div>
             {/* list */}
-            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={examsData} />
+            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={examsData as Exams[]} />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />
         </div>

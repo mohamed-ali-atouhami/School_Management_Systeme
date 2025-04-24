@@ -4,7 +4,13 @@ import Announcement from "@/components/Announcement";
 import CountChartContainer from "@/components/CountChartContainer";
 import AttendanceChartContainer from "@/components/AttendanceChartContainer";
 import EventCalendarContainer from "@/components/EventCalendarContainer";
-export default function AdminPage({searchParams}: {searchParams: {[keys: string]: string | undefined}}) {
+
+interface Props {
+  searchParams: Promise<{ [key: string]: string | undefined }>
+}
+
+export default async function AdminPage({ searchParams }: Props) {
+  const resolvedParams = await searchParams;
   return (
     <div className="p-4 flex flex-col md:flex-row gap-4">
       {/* left side */}
@@ -33,7 +39,7 @@ export default function AdminPage({searchParams}: {searchParams: {[keys: string]
       </div>
       {/* right side */}
       <div className="w-full lg:w-1/3 flex flex-col gap-8">
-        <EventCalendarContainer searchParams={searchParams} />
+        <EventCalendarContainer searchParams={resolvedParams} />
         <Announcement />
       </div>
     </div>

@@ -19,15 +19,15 @@ import { useActionState } from "react"
 import {createResult,updateResult } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-export default function ResultForm({ type, data, setOpen , relatedData}: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void , relatedData?: { students: { id: string; name: string ; surname:string}[] , exams: {id : number; title : string}[] , assignments: {id : number; title : string}[] }}) {
+export default function ResultForm({ type, data, setOpen , relatedData}: { type: "create" | "edit", data?: ResultSchema, setOpen: (open: boolean) => void , relatedData?: { students: { id: string; name: string ; surname:string}[] , exams: {id : number; title : string}[] , assignments: {id : number; title : string}[] }}) {
     const form = useForm<ResultSchema>({
         resolver: zodResolver(resultSchema),
         defaultValues: {
-            id: data?.id || "",
-            score: data?.score || 0,
-            studentId: data?.studentId || "",
-            examId: data?.examId || 0,
-            assignmentId: data?.assignmentId || 0,
+            id: data?.id || undefined,
+            score: data?.score || "",
+            studentId: data?.studentId || undefined,
+            examId: data?.examId || undefined,
+            assignmentId: data?.assignmentId || undefined,
         },
     })
 
@@ -91,7 +91,7 @@ export default function ResultForm({ type, data, setOpen , relatedData}: { type:
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Exams</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={data?.examId}>
+                                <Select onValueChange={field.onChange} defaultValue={data?.examId?.toString()}>
                                     <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select Exams" />
@@ -116,7 +116,7 @@ export default function ResultForm({ type, data, setOpen , relatedData}: { type:
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Assignments</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={data?.assignmentId}>
+                                    <Select onValueChange={field.onChange} defaultValue={data?.assignmentId?.toString()}>
                                         <FormControl>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Assignments" />

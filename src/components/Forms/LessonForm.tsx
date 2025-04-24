@@ -20,18 +20,18 @@ import { useActionState, useEffect, useTransition } from "react"
 import { createLesson, updateLesson } from "@/lib/Actions"
 import { toast } from "sonner"
 
-export default function LessonForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: { subjects: { id: number, name: string }[], classes: { id: number, name: string }[], teachers: { id: string, name: string , surname: string}[] } }) {
+export default function LessonForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: LessonSchema, setOpen: (open: boolean) => void, relatedData?: { subjects: { id: number, name: string }[], classes: { id: number, name: string }[], teachers: { id: string, name: string , surname: string}[] } }) {
     const form = useForm<LessonSchema>({
         resolver: zodResolver(lessonSchema),
         defaultValues: {
-            id: data?.id || "",
+            id: data?.id || undefined,
             name: data?.name || "",
             day: data?.day || "MONDAY",
             startTime: data?.startTime || undefined,
             endTime: data?.endTime || undefined,
             subjectId: data?.subjectId || 0,
             classId: data?.classId || 0,
-            teacherId: data?.teacherId || "",
+            teacherId: data?.teacherId || undefined,
         },
     })
 
@@ -47,7 +47,7 @@ export default function LessonForm({ type, data, setOpen, relatedData }: { type:
         } else if (state?.error === true) {
             toast.error(`Failed to ${type === "create" ? "create" : "update"} lesson!`)
         }
-    }, [state, type, form, router])
+    }, [state, type, form, router, setOpen])
     function onSubmit(values: LessonSchema) {
         startTransition(() => {
             formAction(values)

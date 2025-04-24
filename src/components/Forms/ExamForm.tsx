@@ -22,11 +22,11 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 
-export default function ExamForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: { lessons: { id: number, name: string }[] } }) {
+export default function ExamForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: ExamSchema, setOpen: (open: boolean) => void, relatedData?: { lessons: { id: number, name: string }[] } }) {
     const form = useForm<ExamSchema>({
         resolver: zodResolver(examSchema),
         defaultValues: {
-            id: data?.id || "",
+            id: data?.id || undefined,
             title: data?.title || "",
             startTime: data?.startTime,
             endTime: data?.endTime ,

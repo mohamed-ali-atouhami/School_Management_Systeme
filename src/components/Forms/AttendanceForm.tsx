@@ -21,15 +21,15 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 
-export default function AttendanceForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: { students: { id: number, name: string }[], lessons: { id: number, name: string }[] } }) {
+export default function AttendanceForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: AttendanceSchema, setOpen: (open: boolean) => void, relatedData?: { students: { id: number, name: string }[], lessons: { id: number, name: string }[] } }) {
     const form = useForm<AttendanceSchema>({
         resolver: zodResolver(attendanceSchema),
         defaultValues: {
-            id: data?.id || "",
-            studentId: data?.studentId || "",
-            lessonId: data?.lessonId || 0,
+            id: data?.id || undefined,
+            studentId: data?.studentId || undefined,
+            lessonId: data?.lessonId || undefined,
             date: data?.date,
-            present: data?.present || false,
+            present: data?.present || "false",
         },
     })
 

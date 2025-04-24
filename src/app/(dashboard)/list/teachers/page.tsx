@@ -49,47 +49,54 @@ const getColumns = (role?: string) => [
 ]
 
 
-const renderRow = (role?: string) => (teacher: Teachers) => {
-    return (
-        <tr key={teacher.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
-            <td className="flex items-center gap-4 p-4">
-                <Image
-                    src={teacher.image || "/noAvatar.png"}
-                    alt={teacher.name}
-                    width={40}
-                    height={40}
-                    className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
-                />
-                <div className="flex flex-col">
-                    <h3 className="font-semibold">{teacher.name}</h3>
-                    <p className="text-xs text-gray-500">{teacher.email}</p>
-                </div>
-            </td>
-            <td className="hidden md:table-cell">{teacher.username}</td>
-            <td className="hidden md:table-cell">{teacher.subjects.map(subject => subject.name).join(", ")}</td>
-            <td className="hidden md:table-cell">{teacher.classes.map(cls => cls.name).join(", ")}</td>
-            <td className="hidden lg:table-cell">{teacher.phone}</td>
-            <td className="hidden lg:table-cell">{teacher.address}</td>
-            <td>
-                <div className="flex items-center gap-2">
-                    <Link href={`/list/teachers/${teacher.id}`} >
-                        <button className="w-7 h-7 rounded-full bg-medaliSky flex items-center justify-center">
-                            <Image src="/view.png" alt="" width={16} height={16} />
-                        </button>
-                    </Link>
-                    {role === "admin" &&
-                        <FormContainer table="teachers" type="delete" id={teacher.id} />
-                    }
-                </div>
-            </td>
-        </tr>
-    )
+const renderRow = (role?: string) => {
+    const TeacherRow = (teacher: Teachers) => {
+        return (
+            <tr key={teacher.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
+                <td className="flex items-center gap-4 p-4">
+                    <Image
+                        src={teacher.image || "/noAvatar.png"}
+                        alt={teacher.name}
+                        width={40}
+                        height={40}
+                        className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
+                    />
+                    <div className="flex flex-col">
+                        <h3 className="font-semibold">{teacher.name}</h3>
+                        <p className="text-xs text-gray-500">{teacher.email}</p>
+                    </div>
+                </td>
+                <td className="hidden md:table-cell">{teacher.username}</td>
+                <td className="hidden md:table-cell">{teacher.subjects.map(subject => subject.name).join(", ")}</td>
+                <td className="hidden md:table-cell">{teacher.classes.map(cls => cls.name).join(", ")}</td>
+                <td className="hidden lg:table-cell">{teacher.phone}</td>
+                <td className="hidden lg:table-cell">{teacher.address}</td>
+                <td>
+                    <div className="flex items-center gap-2">
+                        <Link href={`/list/teachers/${teacher.id}`} >
+                            <button className="w-7 h-7 rounded-full bg-medaliSky flex items-center justify-center">
+                                <Image src="/view.png" alt="" width={16} height={16} />
+                            </button>
+                        </Link>
+                        {role === "admin" &&
+                            <FormContainer table="teachers" type="delete" id={teacher.id} />
+                        }
+                    </div>
+                </td>
+            </tr>
+        )
+    };
+    TeacherRow.displayName = 'TeacherRow';
+    return TeacherRow;
+};
+interface Props {
+    searchParams: Promise<{ [key: string]: string | undefined }>
 }
-
-export default async function TeachersListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+export default async function TeachersListPage({ searchParams }: Props) {
+    const resolvedParams = await searchParams;
     const { sessionClaims } = await auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
-    const { page, ...queryparams } = searchParams;
+    const { page, ...queryparams } = resolvedParams;
     const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
     const query: Prisma.TeacherWhereInput = {};
@@ -151,7 +158,7 @@ export default async function TeachersListPage({ searchParams }: { searchParams:
                 </div>
             </div>
             {/* list */}
-            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={teachersData} />
+            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={teachersData as Teachers[]} />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />
         </div>

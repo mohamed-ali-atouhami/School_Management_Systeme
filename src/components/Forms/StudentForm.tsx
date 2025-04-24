@@ -20,8 +20,8 @@ import { toast } from "sonner"
 import { useActionState, useEffect, useState, useTransition } from "react"
 import { createStudent, updateStudent } from "@/lib/Actions"
 import { useRouter } from "next/navigation"
-
-export default function StudentForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: { classes?: { id: number; name: string; capacity: number; _count: { students: number }}[], grades?: { id: number; level: string }[], parents?: { id: string; name: string; surname: string }[] } }) {
+    
+export default function StudentForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: StudentSchema, setOpen: (open: boolean) => void, relatedData?: { classes?: { id: number; name: string; capacity: number; _count: { students: number }}[], grades?: { id: number; level: string }[], parents?: { id: string; name: string; surname: string }[] } }) {
     const form = useForm<StudentSchema>({
         resolver: zodResolver(studentSchema),
         defaultValues: {
@@ -238,7 +238,7 @@ export default function StudentForm({ type, data, setOpen, relatedData }: { type
                     <FormField
                         control={form.control}
                         name="image"
-                        render={({ field: { value, onChange, ...field } }) => (
+                        render={({ field: { onChange, ...field } }) => (
                             <FormItem>
                                 <FormLabel>Image</FormLabel>
                                 <FormControl>
@@ -256,11 +256,11 @@ export default function StudentForm({ type, data, setOpen, relatedData }: { type
                                                 toast.error(`Upload failed: ${error.message}`);
                                             }}
                                         />
-                                        {value && (
+                                        {field.value && (
                                             <div className="relative w-20 h-20">
                                                 <div className="absolute inset-0 flex items-center justify-center">
                                                     <Image
-                                                        src={value}
+                                                        src={field.value}
                                                         alt="Preview"
                                                         fill
                                                         className="object-cover rounded-md"

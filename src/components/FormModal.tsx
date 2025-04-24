@@ -19,6 +19,19 @@ import { deleteSubject, deleteClass, deleteTeacher, deleteStudent, deleteExam, d
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { FormContainerProps } from "./Forms/FormContainer"
+
+interface RelatedData {
+    teachers?: { id: string, name: string, surname: string }[];
+    grades?: { id: number, level: string }[];
+    subjects?: { id: number, name: string }[];
+    classes?: { id: number, name: string, _count?: { students: number } }[];
+    parents?: { id: string, name: string, surname: string }[];
+    students?: { id: string, name: string, surname: string, class?: { name: string } }[];
+    lessons?: { id: number, name: string, class?: { name: string } }[];
+    exams?: { id: number, title: string }[];
+    assignments?: { id: number, title: string }[];
+}
+
 const TeacherForm = dynamic(() => import("./Forms/TeacherForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
 const StudentForm = dynamic(() => import("./Forms/StudentForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
 const AnnouncementForm = dynamic(() => import("./Forms/AnnouncementForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
@@ -31,19 +44,84 @@ const EventForm = dynamic(() => import("./Forms/EventForm"), { ssr: false, loadi
 const LessonForm = dynamic(() => import("./Forms/LessonForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
 const SubjectForm = dynamic(() => import("./Forms/SubjectForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
 const AttendanceForm = dynamic(() => import("./Forms/AttendanceForm"), { ssr: false, loading: () => <span className=" text-center flex justify-center items-center"><Loader className="w-8 h-8 animate-spin" /></span> })
-const formMap: Record<string, React.ComponentType<{ type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: any }>> = {
-    teachers: TeacherForm,
-    students: StudentForm,
-    parents: ParentForm,
-    classes: ClassForm,
-    exams: ExamForm,
-    announcements: AnnouncementForm,
-    assignments: AssignmentForm,
-    results: ResultForm,
-    events: EventForm,
-    lessons: LessonForm,
-    subjects: SubjectForm,
-    attendances: AttendanceForm,
+const formMap: Record<string, React.ComponentType<{ 
+    type: "create" | "edit", 
+    data?: Record<string, unknown> | null, 
+    setOpen: (open: boolean) => void, 
+    relatedData?: RelatedData 
+}>> = {
+    teachers: TeacherForm as React.ComponentType<{
+        type: "create" | "edit",
+        data?: Record<string, unknown> | null,
+        setOpen: (open: boolean) => void,
+        relatedData?: RelatedData
+    }>,
+    students: StudentForm as React.ComponentType<{
+        type: "create" | "edit", 
+        data?: Record<string, unknown> | null,
+        setOpen: (open: boolean) => void,
+        relatedData?: RelatedData
+    }>,
+    parents: ParentForm as React.ComponentType<{
+        type: "create" | "edit",
+        data?: Record<string, unknown> | null,
+        setOpen: (open: boolean) => void,
+        relatedData?: RelatedData
+    }>,
+    classes: ClassForm as React.ComponentType<{
+        type: "create" | "edit",
+        data?: Record<string, unknown> | null,
+        setOpen: (open: boolean) => void,
+        relatedData?: RelatedData
+    }>,
+    exams: ExamForm as React.ComponentType<{
+        type: "create" | "edit",
+        data?: Record<string, unknown> | null,
+        setOpen: (open: boolean) => void,
+        relatedData?: RelatedData
+    }>,
+    announcements: AnnouncementForm as React.ComponentType<{
+        type: "create" | "edit",
+        data?: Record<string, unknown> | null,
+        setOpen: (open: boolean) => void,
+        relatedData?: RelatedData
+    }>,
+    assignments: AssignmentForm as React.ComponentType<{
+        type: "create" | "edit",
+        data?: Record<string, unknown> | null,
+        setOpen: (open: boolean) => void,
+        relatedData?: RelatedData
+    }>,
+    results: ResultForm as React.ComponentType<{
+        type: "create" | "edit",
+        data?: Record<string, unknown> | null,
+        setOpen: (open: boolean) => void,
+        relatedData?: RelatedData
+    }>,
+    events: EventForm as React.ComponentType<{
+        type: "create" | "edit",
+        data?: Record<string, unknown> | null,
+        setOpen: (open: boolean) => void,
+        relatedData?: RelatedData
+    }>,
+    attendances: AttendanceForm as React.ComponentType<{
+        type: "create" | "edit",
+        data?: Record<string, unknown> | null,
+        setOpen: (open: boolean) => void,
+        relatedData?: RelatedData
+    }>,
+    lessons: LessonForm as React.ComponentType<{
+        type: "create" | "edit",
+        data?: Record<string, unknown> | null,
+        setOpen: (open: boolean) => void,
+        relatedData?: RelatedData
+    }>,
+    subjects: SubjectForm as React.ComponentType<{
+        type: "create" | "edit",
+        data?: Record<string, unknown> | null,
+        setOpen: (open: boolean) => void,
+        relatedData?: RelatedData
+    }>,
 }
 
 // First, let's define a type for our delete functions
@@ -65,7 +143,7 @@ const deleteMap: Partial<Record<"students" | "teachers" | "parents" | "classes" 
     announcements: deleteAnnouncement,
 }
 
-export default function FormModal({ table, type, data, id, relatedData }: FormContainerProps & { relatedData?: any }) {
+export default function FormModal({ table, type, data, id, relatedData }: FormContainerProps & { relatedData?: RelatedData }) {
     const size = type === "create" ? "w-8 h-8" : "w-7 h-7"
     const bgColor = type === "create" ? "bg-medaliYellow" : type === "edit" ? "bg-medaliSky" : "bg-medaliPurple"
     const [open, setOpen] = useState(false)
@@ -76,9 +154,11 @@ export default function FormModal({ table, type, data, id, relatedData }: FormCo
 
         const handleDelete = async () => {
             const formData = new FormData()
-            formData.append('id', String(id))
+            if (id) {
+                formData.append('id', String(id))
+            }
             if (data?.image) {
-                formData.append('image', data.image)
+                formData.append('image', data.image as Blob)
             }
 
             startTransition(async () => {

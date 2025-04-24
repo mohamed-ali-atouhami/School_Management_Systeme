@@ -19,11 +19,12 @@ import { useTransition, useEffect } from 'react'
 import { useRouter } from "next/navigation"
 import Select from "react-select"
 
-export default function SubjectForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: any, setOpen: (open: boolean) => void, relatedData?: any }) {
+export default function SubjectForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: SubjectSchema, setOpen: (open: boolean) => void, relatedData?: { teachers?: { id: string, name: string, surname: string }[] } }) {
     const form = useForm<SubjectSchema>({
         resolver: zodResolver(subjectSchema),
         defaultValues: {
-            subjectName: data?.name || "",
+            id: data?.id || undefined,
+            subjectName: data?.subjectName || "",
             teachers: data?.teachers || [],
         },
     })
@@ -39,7 +40,7 @@ export default function SubjectForm({ type, data, setOpen, relatedData }: { type
         } else if (state?.error === true) {
             toast.error(`Failed to ${type === "create" ? "create" : "update"} subject!`)
         }
-    }, [state, type, form, router])
+    }, [state, type, form, router, setOpen])
 
     async function onSubmit(values: SubjectSchema) {
         // Ensure we're sending an object with all required fields
@@ -61,12 +62,6 @@ export default function SubjectForm({ type, data, setOpen, relatedData }: { type
         label: `${teacher.name} ${teacher.surname}`
     }))
 
-    // Transform default values for react-select
-    const defaultTeachers = data?.teachers?.map((teacher: any) => ({
-        value: teacher.id,
-        label: `${teacher.name} ${teacher.surname}`
-    })) || []
-
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-8">
@@ -85,13 +80,12 @@ export default function SubjectForm({ type, data, setOpen, relatedData }: { type
                                         <Select
                                             isMulti
                                             options={teacherOptions}
-                                            value={teacherOptions.filter((option: any) => 
+                                            value={teacherOptions.filter((option: {value: string, label: string}) => 
                                                 field.value?.includes(option.value)
                                             )}
                                             onChange={(newValue) => {
                                                 field.onChange(newValue ? newValue.map(v => v.value) : [])
                                             }}
-                                            defaultValue={defaultTeachers}
                                             className="basic-multi-select"
                                             classNamePrefix="select"
                                             placeholder="Select teachers..."

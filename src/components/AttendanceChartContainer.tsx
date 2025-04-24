@@ -28,7 +28,7 @@ export default async function AttendanceChartContainer() {
         Fri:{present:0, absent:0}
     }
     data.forEach((item) => {
-        const itemDate = new Date(item.date);
+        //const itemDate = new Date(item.date);
         if(dayOfWeek >= 1 && dayOfWeek <= 5){
            const dayName = DaysOfWeek[dayOfWeek - 1];
            if(item.present){

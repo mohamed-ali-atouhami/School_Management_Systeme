@@ -3,21 +3,21 @@ import Image from "next/image";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
-import { Prisma} from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import FormContainer from "@/components/Forms/FormContainer";
 type Results = {
-    id:number,
-    title:string,
-    studentName:string,
-    studentSurName:string,
-    teacherName:string,
-    teacherSurName:string,
-    score:number,
-    className:string,
-    startTime:Date,
-    type:string,
+    id: number,
+    title: string,
+    studentName: string,
+    studentSurName: string,
+    teacherName: string,
+    teacherSurName: string,
+    score: number,
+    className: string,
+    startTime: Date,
+    type: string,
 }
 const getColumns = (role?: string) => [
     {
@@ -59,37 +59,44 @@ const getColumns = (role?: string) => [
     }] : []),
 
 ]
-const renderRow = (role?: string) => (result: Results) => {
-    return (
-        <tr key={result.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
-            <td className="flex items-center gap-4 p-4">
-                {result?.title}
-            </td>
-            <td >{result?.studentName} {result?.studentSurName}</td>
-            <td className="hidden lg:table-cell">{result?.score}</td>
-            <td className="hidden md:table-cell">{result?.teacherName} {result?.teacherSurName}</td>
-            <td className="hidden md:table-cell">{result?.className}</td>
-            <td className="hidden lg:table-cell">{new Intl.DateTimeFormat("GMT").format(result?.startTime)}</td>
-            <td className="hidden lg:table-cell">{result?.type}</td>
-            <td>
-                <div className="flex items-center gap-2">
-                    {(role === "admin" || role === "teacher") && 
-                        <>
-                            <FormContainer table="results" type="edit" data={result} />
-                            <FormContainer table="results" type="delete" id={result.id} />
-                        </>
-                    }
-                </div>
-            </td>
-        </tr>
-    )
+const renderRow = (role?: string) => {
+    const ResultRow = (result: Results) => {
+        return (
+            <tr key={result.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-medaliPurpleLight">
+                <td className="flex items-center gap-4 p-4">
+                    {result?.title}
+                </td>
+                <td >{result?.studentName} {result?.studentSurName}</td>
+                <td className="hidden lg:table-cell">{result?.score}</td>
+                <td className="hidden md:table-cell">{result?.teacherName} {result?.teacherSurName}</td>
+                <td className="hidden md:table-cell">{result?.className}</td>
+                <td className="hidden lg:table-cell">{new Intl.DateTimeFormat("GMT").format(result?.startTime)}</td>
+                <td className="hidden lg:table-cell">{result?.type}</td>
+                <td>
+                    <div className="flex items-center gap-2">
+                        {(role === "admin" || role === "teacher") &&
+                            <>
+                                <FormContainer table="results" type="edit" data={result} />
+                                <FormContainer table="results" type="delete" id={result.id} />
+                            </>
+                        }
+                    </div>
+                </td>
+            </tr>
+        )
+    };
+    ResultRow.displayName = 'ResultRow';
+    return ResultRow;
+};
+interface Props {
+    searchParams: Promise<{ [key: string]: string | undefined }>
 }
-
-export default async function ResultsListPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
-    const { sessionClaims ,userId} = await auth();
+export default async function ResultsListPage({ searchParams }: Props) {
+    const resolvedParams = await searchParams;
+    const { sessionClaims, userId } = await auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
     const currentUserId = userId!;
-    const { page, ...queryparams } = searchParams;
+    const { page, ...queryparams } = resolvedParams;
     const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
     const query: Prisma.ResultWhereInput = {};
@@ -100,11 +107,11 @@ export default async function ResultsListPage({ searchParams }: { searchParams: 
                     query.studentId = value
                     break;
                 case "search":
-                    query.OR=[
-                        {student: {name: {contains: value, mode: "insensitive"}}},
-                        {student: {surname: {contains: value, mode: "insensitive"}}},
-                        {exam: {title: {contains: value, mode: "insensitive"}}},
-                        {assignment: {title: {contains: value, mode: "insensitive"}}},
+                    query.OR = [
+                        { student: { name: { contains: value, mode: "insensitive" } } },
+                        { student: { surname: { contains: value, mode: "insensitive" } } },
+                        { exam: { title: { contains: value, mode: "insensitive" } } },
+                        { assignment: { title: { contains: value, mode: "insensitive" } } },
                     ]
                     break;
                 default:
@@ -152,15 +159,15 @@ export default async function ResultsListPage({ searchParams }: { searchParams: 
                 student: {
                     select: {
                         name: true,
-                        surname: true,   
+                        surname: true,
                     },
                 },
                 exam: {
                     include: {
                         lesson: {
                             include: {
-                                teacher: {select: {name: true, surname: true}},
-                                class: {select: {name: true}},
+                                teacher: { select: { name: true, surname: true } },
+                                class: { select: { name: true } },
                             },
                         },
                     },
@@ -169,14 +176,14 @@ export default async function ResultsListPage({ searchParams }: { searchParams: 
                     include: {
                         lesson: {
                             include: {
-                                teacher: {select: {name: true, surname: true}},
-                                class: {select: {name: true}},
+                                teacher: { select: { name: true, surname: true } },
+                                class: { select: { name: true } },
                             },
                         },
                     },
                 },
             },
-            orderBy:{createdAt:"desc"},
+            orderBy: { createdAt: "desc" },
             take: ITEMS_PER_PAGE,
             skip: (pageNumber - 1) * ITEMS_PER_PAGE,
         }),
@@ -184,22 +191,21 @@ export default async function ResultsListPage({ searchParams }: { searchParams: 
             where: query,
         }),
     ]);
-    const data = resultsData.map(item =>{
-        const assesment =  item.exam || item.assignment
-        if(!assesment) return null
+    const data = resultsData.map(item => {
+        const assesment = item.exam || item.assignment
+        if (!assesment) return null
         const isExam = "startTime" in assesment
         return {
-            id:item.id,
-            title:assesment.title,
-            studentName:item.student.name,
-            studentSurName:item.student.surname,
-            teacherName:assesment.lesson.teacher.name,
-            teacherSurName:assesment.lesson.teacher.surname,
-            className:assesment.lesson.class.name,
-            date:isExam ? assesment.startTime : assesment.startDate,
-            type:isExam ? "Exam" : "Assignment",
-            score:item.score,
-            
+            id: item.id,
+            title: assesment.title,
+            studentName: item.student.name,
+            studentSurName: item.student.surname,
+            teacherName: assesment.lesson.teacher.name,
+            teacherSurName: assesment.lesson.teacher.surname,
+            className: assesment.lesson.class.name,
+            startTime: isExam ? assesment.startTime : assesment.startDate,
+            type: isExam ? "Exam" : "Assignment",
+            score: item.score,
         }
     }).filter(Boolean)
     return (
@@ -216,14 +222,14 @@ export default async function ResultsListPage({ searchParams }: { searchParams: 
                         <button className="w-8 h-8 rounded-full bg-medaliYellow flex items-center justify-center">
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
-                        {(role === "admin" || role === "teacher") && 
+                        {(role === "admin" || role === "teacher") &&
                             <FormContainer table="results" type="create" />
                         }
                     </div>
                 </div>
             </div>
             {/* list */}
-            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={data} />
+            <Table columns={getColumns(role)} renderRow={renderRow(role)} data={data as Results[]} />
             {/* pagination */}
             <Pagination page={pageNumber} totalCount={count} />
         </div>

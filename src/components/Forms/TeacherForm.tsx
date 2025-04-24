@@ -20,7 +20,7 @@ import { useRouter } from "next/navigation"
 import { createTeacher, updateTeacher } from "@/lib/Actions"
 import { UploadButton } from "@/lib/uploadthing"
 import Image from "next/image"
-import MultiSelect from "react-select"
+import MultiSelect, { MultiValue } from "react-select"
 export default function TeacherForm({ 
     type, 
     data, 
@@ -50,8 +50,8 @@ export default function TeacherForm({
             sex: data?.sex || undefined,
             birthday: data?.birthday || undefined,
             image: data?.image || "",
-            subjects: data?.subjects?.map((subject: any) => subject.id.toString()) || [],
-            classes: data?.classes?.map((classItem: any) => classItem.id.toString()) || []
+            subjects: data?.subjects || [],
+            classes: data?.classes || []
         },
     })
 
@@ -190,11 +190,11 @@ export default function TeacherForm({
                                     <FormControl>
                                         <MultiSelect
                                             options={subjectOptions}
-                                            value={subjectOptions.filter((option: any) => 
+                                            value={subjectOptions.filter((option: {value: string, label: string}) => 
                                                 field.value?.includes(option.value)
                                             )}
-                                            onChange={(newValue: any) => {
-                                                field.onChange(newValue.map((v: any) => v.value))
+                                            onChange={(newValue: MultiValue<{value: string, label: string}>) => {
+                                                field.onChange(newValue.map((v: {value: string, label: string}) => v.value))
                                             }}
                                             isMulti
                                             className="basic-multi-select"
@@ -218,11 +218,11 @@ export default function TeacherForm({
                                     <FormControl>
                                         <MultiSelect
                                             options={classOptions}
-                                            value={classOptions.filter((option: any) => 
+                                            value={classOptions.filter((option: {value: string, label: string}) => 
                                                 field.value?.includes(option.value)
                                             )}
-                                            onChange={(newValue: any) => {
-                                                field.onChange(newValue.map((v: any) => v.value))
+                                            onChange={(newValue: MultiValue<{value: string, label: string}>) => {
+                                                field.onChange(newValue.map((v: {value: string, label: string}) => v.value))
                                             }}
                                             isMulti
                                             className="basic-multi-select"
@@ -240,7 +240,7 @@ export default function TeacherForm({
                 <FormField
                     control={form.control}
                     name="image"
-                    render={({ field: { value, onChange, ...field } }) => (
+                    render={({ field: {  onChange, ...field } }) => (
                         <FormItem>
                             <FormLabel>Image</FormLabel>
                             <FormControl>
@@ -257,11 +257,11 @@ export default function TeacherForm({
                                             toast.error(`Upload failed: ${error.message}`);
                                         }}
                                     />
-                                    {value && (
+                                    {field.value && (
                                         <div className="relative w-20 h-20">
                                             <div className="absolute inset-0 flex items-center justify-center">
                                                 <Image
-                                                    src={value}
+                                                    src={field.value}
                                                     alt="Preview"
                                                     fill
                                                     className="object-cover rounded-md"

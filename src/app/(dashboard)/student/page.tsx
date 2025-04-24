@@ -1,13 +1,17 @@
 import Announcement from "@/components/Announcement";
 import { auth } from "@clerk/nextjs/server";
-import EventCalender from "@/components/EventCalender";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import prisma from "@/lib/prisma";
-export default async function StudentPage() {
+import EventCalendarContainer from "@/components/EventCalendarContainer";
+interface Props {
+  searchParams: Promise<{ [key: string]: string | undefined }>
+}
+export default async function StudentPage({ searchParams }: Props) {
+  const resolvedParams = await searchParams;
   const { userId } = await auth();
   const classRes = await prisma.class.findMany({
     where: {
-      students: { some: { id: userId! }}
+      students: { some: { id: userId! } }
     },
     select: {
       id: true,
@@ -25,7 +29,7 @@ export default async function StudentPage() {
       </div>
       {/* right side */}
       <div className="w-full xl:w-1/3 flex flex-col gap-8">
-        <EventCalender />
+        <EventCalendarContainer searchParams={resolvedParams} />
         <Announcement />
       </div>
 
