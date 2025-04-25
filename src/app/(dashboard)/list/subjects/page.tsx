@@ -120,4 +120,3 @@ export default async function SubjectsListPage({ searchParams }: Props) {
         </div>
     )
 }
-

@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectValue, SelectTrigger, SelectItem } from "@/components/ui/select"
 import InputFields from "../InputFields"
 import { announcementSchema, AnnouncementSchema } from "@/lib/FormValidationSchema"
-import { useActionState , useEffect , useTransition} from "react"
+import { useActionState, useEffect, useTransition } from "react"
 import { createAnnouncement, updateAnnouncement } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -67,8 +67,8 @@ export default function AnnouncementForm({ type, data, setOpen, relatedData }: {
 
                 <span className="text-xs text-gray-400 font-medium">Announcement Details</span>
                 <div className="flex justify-between flex-wrap gap-4">
-                    <InputFields type="text" label="Title" placeholder="title" control={form.control} name="title"   />
-                    <InputFields type="text" label="Description" placeholder="description" control={form.control} name="description"   />
+                    <InputFields type="text" label="Title" placeholder="title" control={form.control} name="title" />
+                    <InputFields type="text" label="Description" placeholder="description" control={form.control} name="description" />
                 </div>
                 <div className="flex justify-between flex-wrap gap-4">
                     <FormField
@@ -108,7 +108,7 @@ export default function AnnouncementForm({ type, data, setOpen, relatedData }: {
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {classes?.map((clss: {id: number, name: string}) => (
+                                            {classes?.map((clss: { id: number, name: string }) => (
                                                 <SelectItem key={clss.id} value={clss.id.toString()}>
                                                     {clss.name}
                                                 </SelectItem>
@@ -120,7 +120,7 @@ export default function AnnouncementForm({ type, data, setOpen, relatedData }: {
                             )}
                         />
                     </div>
-                    
+
                 </div>
                 <Button type="submit" disabled={isPending}>{isPending ? type === "create" ? "Creating..." : "Updating..." : type === "create" ? "Create" : "Update"}</Button>
             </form>

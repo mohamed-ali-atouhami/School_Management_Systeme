@@ -18,7 +18,7 @@ import { examSchema, ExamSchema } from "@/lib/FormValidationSchema"
 import { createExam, updateExam } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { useEffect , useTransition , useActionState} from "react"
+import { useEffect, useTransition, useActionState } from "react"
 
 export default function ExamForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: ExamSchema, setOpen: (open: boolean) => void, relatedData?: { lessons: { id: number, name: string }[] } }) {
     const form = useForm<ExamSchema>({
@@ -27,7 +27,7 @@ export default function ExamForm({ type, data, setOpen, relatedData }: { type: "
             id: data?.id || undefined,
             title: data?.title || "",
             startTime: data?.startTime,
-            endTime: data?.endTime ,
+            endTime: data?.endTime,
             lessonId: data?.lessonId || 0,
         },
     })
@@ -67,7 +67,7 @@ export default function ExamForm({ type, data, setOpen, relatedData }: { type: "
 
                 <span className="text-xs text-gray-400 font-medium">Exam Details</span>
                 <div className="flex justify-between flex-wrap gap-4">
-                    <InputFields type="text" label="Title" placeholder="title" control={form.control} name="title"   />
+                    <InputFields type="text" label="Title" placeholder="title" control={form.control} name="title" />
                 </div>
                 <div className="flex justify-between flex-wrap gap-4">
                     <FormField
@@ -130,7 +130,7 @@ export default function ExamForm({ type, data, setOpen, relatedData }: { type: "
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {lessons?.map((lesson: {id: number, name: string}) => (
+                                            {lessons?.map((lesson: { id: number, name: string }) => (
                                                 <SelectItem key={lesson.id} value={lesson.id.toString()}>
                                                     {lesson.name}
                                                 </SelectItem>
@@ -142,7 +142,7 @@ export default function ExamForm({ type, data, setOpen, relatedData }: { type: "
                             )}
                         />
                     </div>
-                    
+
                 </div>
                 <Button type="submit" disabled={isPending}>{isPending ? type === "create" ? "Creating..." : "Updating..." : type === "create" ? "Create" : "Update"}</Button>
             </form>

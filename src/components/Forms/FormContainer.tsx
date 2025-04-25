@@ -193,10 +193,10 @@ export default async function FormContainer({ table, type, data, id, relatedData
                     teachers: lessonsTeachers
                 }
                 break
-            case "results" : 
+            case "results":
                 const resultsStudents = await prisma.student.findMany({
                     where: {
-                        ...(role === "teacher" ? { class: {lessons: {some: {teacherId: currentUserId}}}} : {})
+                        ...(role === "teacher" ? { class: { lessons: { some: { teacherId: currentUserId } } } } : {})
                     },
                     select: {
                         id: true,
@@ -205,24 +205,24 @@ export default async function FormContainer({ table, type, data, id, relatedData
                     }
                 });
                 const resultsExams = await prisma.exam.findMany({
-                    where:{
-                        ...(role === "teacher" ? {lesson:{teacherId: currentUserId}} : {})
+                    where: {
+                        ...(role === "teacher" ? { lesson: { teacherId: currentUserId } } : {})
 
                     },
-                    select:{
-                        id : true,
+                    select: {
+                        id: true,
                         title: true
                     }
                 });
                 const resultsAssignments = await prisma.assignment.findMany({
-                    where:{
-                        ...(role === "teacher" ? {lesson:{teacherId : currentUserId}} : {})
+                    where: {
+                        ...(role === "teacher" ? { lesson: { teacherId: currentUserId } } : {})
                     }
                 });
                 relatedData = {
                     students: resultsStudents,
-                    exams : resultsExams,
-                    assignments : resultsAssignments
+                    exams: resultsExams,
+                    assignments: resultsAssignments
                 }
                 break;
             case "assignments":
@@ -264,7 +264,7 @@ export default async function FormContainer({ table, type, data, id, relatedData
             case "attendances":
                 const attendanceLessons = await prisma.lesson.findMany({
                     where: {
-                        ...(role === "teacher" ? { 
+                        ...(role === "teacher" ? {
                             teacherId: currentUserId
                         } : {})
                     },
@@ -280,7 +280,7 @@ export default async function FormContainer({ table, type, data, id, relatedData
                 })
                 const attendanceStudents = await prisma.student.findMany({
                     where: {
-                        ...(role === "teacher" ? { 
+                        ...(role === "teacher" ? {
                             class: {
                                 lessons: {
                                     some: {

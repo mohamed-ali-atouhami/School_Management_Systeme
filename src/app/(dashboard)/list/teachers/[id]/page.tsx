@@ -15,8 +15,8 @@ interface Props {
 export default async function TeacherSinglePage({ params }: Props) {
   const resolvedParams = await params;
   const { id } = resolvedParams;
-  const {sessionClaims} = await auth()
-  const role = (sessionClaims?.metadata as {role?: string})?.role
+  const { sessionClaims } = await auth()
+  const role = (sessionClaims?.metadata as { role?: string })?.role
   const teacher = await prisma.teacher.findUnique({
     where: {
       id: id
@@ -43,13 +43,13 @@ export default async function TeacherSinglePage({ params }: Props) {
         <div className="flex flex-col gap-4 lg:flex-row ">
           {/* left (User Card Info) */}
           <div className="flex-1 flex gap-4 lg:w-2/3 bg-medaliSky rounded-md p-4">
-            
+
             <div className="w-1/3">
-              <Image 
-                src={teacher.image || "/noAvatar.png"} 
-                alt="user" 
-                width={144} 
-                height={144} 
+              <Image
+                src={teacher.image || "/noAvatar.png"}
+                alt="user"
+                width={144}
+                height={144}
                 className="w-36 h-36  rounded-full object-cover"
               />
             </div>
@@ -90,7 +90,7 @@ export default async function TeacherSinglePage({ params }: Props) {
             {/* card 1 */}
             <div className="bg-white rounded-md p-4 flex gap-4 w-full md:w-[48%] lg:w-[45%] xl:w-[47%] ">
               <div className="flex items-center gap-2">
-                <Image src="/singleAttendance.png" alt="" width={24} height={24} className="w-6 h-6"/>
+                <Image src="/singleAttendance.png" alt="" width={24} height={24} className="w-6 h-6" />
                 <div>
                   <h1 className="text-xl font-semibold">90%</h1>
                   <span className="text-sm text-gray-400">Attendance</span>
@@ -100,7 +100,7 @@ export default async function TeacherSinglePage({ params }: Props) {
             {/* card 2 */}
             <div className="bg-white rounded-md p-4 flex gap-4 w-full md:w-[48%] lg:w-[45%] xl:w-[47%] ">
               <div className="flex items-center gap-2">
-                <Image src="/singleBranch.png" alt="" width={24} height={24} className="w-6 h-6"/>
+                <Image src="/singleBranch.png" alt="" width={24} height={24} className="w-6 h-6" />
                 <div>
                   <h1 className="text-xl font-semibold">{teacher._count.subjects}</h1>
                   <span className="text-sm text-gray-400">Subjects</span>
@@ -110,7 +110,7 @@ export default async function TeacherSinglePage({ params }: Props) {
             {/* card 3 */}
             <div className="bg-white rounded-md p-4 flex gap-4 w-full md:w-[48%] lg:w-[45%] xl:w-[47%]">
               <div className="flex items-center gap-2">
-                <Image src="/singleLesson.png" alt="" width={24} height={24} className="w-6 h-6"/>
+                <Image src="/singleLesson.png" alt="" width={24} height={24} className="w-6 h-6" />
                 <div>
                   <h1 className="text-xl font-semibold">{teacher._count.lessons}</h1>
                   <span className="text-sm text-gray-400">Lessons</span>
@@ -120,7 +120,7 @@ export default async function TeacherSinglePage({ params }: Props) {
             {/* card 4 */}
             <div className="bg-white rounded-md p-4 flex gap-4 w-full md:w-[48%] lg:w-[45%] xl:w-[47%]">
               <div className="flex items-center gap-2">
-                <Image src="/singleClass.png" alt="" width={24} height={24} className="w-6 h-6"/>
+                <Image src="/singleClass.png" alt="" width={24} height={24} className="w-6 h-6" />
                 <div>
                   <h1 className="text-xl font-semibold">{teacher._count.classes}</h1>
                   <span className="text-sm text-gray-400">Classes</span>
@@ -132,7 +132,7 @@ export default async function TeacherSinglePage({ params }: Props) {
         {/* Bottom */}
         <div className="mt-4 bg-white rounded-md p-4 h-[800px]">
           <h1 className="text-lg font-semibold">Teacher&apos;s Schedule</h1>
-          <BigCalendarContainer type="teacherId" id={teacher.id}/>
+          <BigCalendarContainer type="teacherId" id={teacher.id} />
 
         </div>
       </div>
@@ -148,9 +148,9 @@ export default async function TeacherSinglePage({ params }: Props) {
             <Link className="p-3 rounded-md bg-medaliSkyLight" href={`/list/assignments?teacherId=${teacher.id}`}>Teacher&apos;s Assignments</Link>
           </div>
         </div>
-        <PerformanceChart/>
-        <Announcement/>
+        <PerformanceChart />
+        <Announcement />
       </div>
-    </div>  
+    </div>
   )
 }

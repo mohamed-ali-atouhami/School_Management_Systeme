@@ -54,11 +54,11 @@ const renderRow = (role?: string) => {
                 </td>
                 <td>
                     <div className="flex items-center gap-2">
-                        {(role === "admin" || role === "teacher") && 
-                        <>
-                            <FormContainer table="exams" type="edit" data={exam} />
-                            <FormContainer table="exams" type="delete" id={exam.id} />
-                        </>
+                        {(role === "admin" || role === "teacher") &&
+                            <>
+                                <FormContainer table="exams" type="edit" data={exam} />
+                                <FormContainer table="exams" type="delete" id={exam.id} />
+                            </>
                         }
                     </div>
                 </td>
@@ -70,17 +70,17 @@ const renderRow = (role?: string) => {
 };
 interface Props {
     searchParams: Promise<{ [key: string]: string | undefined }>
-  }
+}
 export default async function ExamsListPage({ searchParams }: Props) {
     const resolvedParams = await searchParams;
-    const { sessionClaims ,userId} = await auth();
+    const { sessionClaims, userId } = await auth();
     const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
     const currentUserId = userId!;
     const { page, ...queryparams } = resolvedParams;
     const pageNumber = page ? Number(page) : 1;
     // URL PARAMS CONDITIONS
     const query: Prisma.ExamWhereInput = {};
-    query.lesson={};
+    query.lesson = {};
     if (queryparams) {
         for (const [key, value] of Object.entries(queryparams)) {
             switch (key) {
@@ -132,9 +132,9 @@ export default async function ExamsListPage({ searchParams }: Props) {
             include: {
                 lesson: {
                     select: {
-                        subject: {select: {name: true}},
-                        class: {select: {name: true}},
-                        teacher: {select: {name: true ,surname: true}},
+                        subject: { select: { name: true } },
+                        class: { select: { name: true } },
+                        teacher: { select: { name: true, surname: true } },
                     },
                 },
             },
@@ -162,10 +162,10 @@ export default async function ExamsListPage({ searchParams }: Props) {
                         <button className="w-8 h-8 rounded-full bg-medaliYellow flex items-center justify-center">
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
-                        {(role === "admin" || role === "teacher") && 
-                        <>
-                            <FormContainer table="exams" type="create" />
-                        </>
+                        {(role === "admin" || role === "teacher") &&
+                            <>
+                                <FormContainer table="exams" type="create" />
+                            </>
                         }
                     </div>
                 </div>
@@ -177,4 +177,3 @@ export default async function ExamsListPage({ searchParams }: Props) {
         </div>
     )
 }
-

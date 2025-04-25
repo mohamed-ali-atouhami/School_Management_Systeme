@@ -164,4 +164,3 @@ export default async function TeachersListPage({ searchParams }: Props) {
         </div>
     )
 }
-

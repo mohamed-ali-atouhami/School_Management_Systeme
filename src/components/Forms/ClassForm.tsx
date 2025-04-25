@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-export default function ClassForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: ClassSchema, setOpen: (open: boolean) => void, relatedData?: { teachers: {id: string, name: string, surname: string}[], grades: {id: number, level: string}[] } }) {
+export default function ClassForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: ClassSchema, setOpen: (open: boolean) => void, relatedData?: { teachers: { id: string, name: string, surname: string }[], grades: { id: number, level: string }[] } }) {
     const form = useForm<ClassSchema>({
         resolver: zodResolver(classSchema),
         defaultValues: {
@@ -59,61 +59,61 @@ export default function ClassForm({ type, data, setOpen, relatedData }: { type: 
                     <InputFields type="text" label="Class Name" placeholder="class name" control={form.control} name="name" />
                     <InputFields type="number" label="Capacity" placeholder="capacity" control={form.control} name="capacity" />
                     <div className="flex justify-between flex-wrap gap-4">
-                    {data && <InputFields label="Id" control={form.control} name="id" hidden />}
-                   
-                    <FormField
-                        control={form.control}
-                        name="supervisorId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Supervisor</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={data?.supervisorId}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select supervisor" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {teachers.map((teacher: {id: string, name: string, surname: string}, index: number) => (
-                                            <SelectItem key={index} value={teacher.id}>
-                                                {teacher.name} {teacher.surname}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                        {data && <InputFields label="Id" control={form.control} name="id" hidden />}
+
+                        <FormField
+                            control={form.control}
+                            name="supervisorId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Supervisor</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={data?.supervisorId}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select supervisor" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {teachers.map((teacher: { id: string, name: string, surname: string }, index: number) => (
+                                                <SelectItem key={index} value={teacher.id}>
+                                                    {teacher.name} {teacher.surname}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    <div className="flex justify-between flex-wrap gap-4">
+                        <FormField
+                            control={form.control}
+                            name="gradeId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Grade</FormLabel>
+                                    <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={data?.gradeId?.toString()}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select grade" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {grades.map((grade: { id: number, level: string }, index: number) => (
+                                                <SelectItem key={index} value={grade.id.toString()}>
+                                                    {grade.level}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                 </div>
-                <div className="flex justify-between flex-wrap gap-4">
-                    <FormField
-                        control={form.control}
-                        name="gradeId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Grade</FormLabel>
-                                <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={data?.gradeId?.toString()}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select grade" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {grades.map((grade: {id: number, level: string}, index: number) => (
-                                            <SelectItem key={index} value={grade.id.toString()}>
-                                                {grade.level}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-                </div>
-                
+
                 <Button type="submit" disabled={isPending}>
                     {isPending ? (type === "create" ? "Creating..." : "Updating...") : (type === "create" ? "Create" : "Update")}
                 </Button>

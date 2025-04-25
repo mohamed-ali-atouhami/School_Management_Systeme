@@ -50,15 +50,15 @@ const renderRow = (role?: string) => {
                 </td>
                 <td >{event.class?.name || "-"}</td>
                 <td className="hidden lg:table-cell">{new Intl.DateTimeFormat("GMT").format(event.startTime)}</td>
-                <td className="hidden lg:table-cell">{new Date(event.startTime).toLocaleString("GMT",{hour: "2-digit", minute: "2-digit" , hour12: false})}</td>
-                <td className="hidden md:table-cell">{new Date(event.endTime).toLocaleString("GMT",{hour: "2-digit", minute: "2-digit" , hour12: false})}</td>
+                <td className="hidden lg:table-cell">{new Date(event.startTime).toLocaleString("GMT", { hour: "2-digit", minute: "2-digit", hour12: false })}</td>
+                <td className="hidden md:table-cell">{new Date(event.endTime).toLocaleString("GMT", { hour: "2-digit", minute: "2-digit", hour12: false })}</td>
                 <td>
                     <div className="flex items-center gap-2">
-                        {role === "admin" && 
-                        <>
-                            <FormContainer table="events" type="edit" data={event} />
-                            <FormContainer table="events" type="delete" id={event.id} />
-                        </>
+                        {role === "admin" &&
+                            <>
+                                <FormContainer table="events" type="edit" data={event} />
+                                <FormContainer table="events" type="delete" id={event.id} />
+                            </>
                         }
                     </div>
                 </td>
@@ -70,10 +70,10 @@ const renderRow = (role?: string) => {
 };
 interface Props {
     searchParams: Promise<{ [key: string]: string | undefined }>
-  }
+}
 export default async function EventsListPage({ searchParams }: Props) {
     const resolvedParams = await searchParams;
-    const { sessionClaims ,userId} = await auth();
+    const { sessionClaims, userId } = await auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
     const currentUserId = userId!;
 
@@ -139,7 +139,7 @@ export default async function EventsListPage({ searchParams }: Props) {
         prisma.event.findMany({
             where: query,
             include: {
-                class: {select: {name: true}},
+                class: { select: { name: true } },
             },
             orderBy: {
                 createdAt: "desc"
@@ -165,10 +165,10 @@ export default async function EventsListPage({ searchParams }: Props) {
                         <button className="w-8 h-8 rounded-full bg-medaliYellow flex items-center justify-center">
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
-                        {role === "admin" && 
-                        <>
-                            <FormContainer table="events" type="create" />
-                        </>
+                        {role === "admin" &&
+                            <>
+                                <FormContainer table="events" type="create" />
+                            </>
                         }
                     </div>
                 </div>

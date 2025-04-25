@@ -13,12 +13,12 @@ import {
 import InputFields from "../InputFields"
 import { createSubject, updateSubject } from "@/lib/Actions"
 import { subjectSchema, SubjectSchema } from "@/lib/FormValidationSchema"
-import { useActionState , useEffect , useTransition} from "react"
+import { useActionState, useEffect, useTransition } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import Select from "react-select"
 
-export default function SubjectForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: SubjectSchema , setOpen: (open: boolean) => void, relatedData?: { teachers?: { id: string, name: string, surname: string }[] } }) {
+export default function SubjectForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: SubjectSchema, setOpen: (open: boolean) => void, relatedData?: { teachers?: { id: string, name: string, surname: string }[] } }) {
     const form = useForm<SubjectSchema>({
         resolver: zodResolver(subjectSchema),
         defaultValues: {
@@ -49,7 +49,7 @@ export default function SubjectForm({ type, data, setOpen, relatedData }: { type
     const teachers = relatedData?.teachers || []
 
     // Transform teacher options for react-select
-    const teacherOptions = teachers.map((teacher: {id: string, name: string, surname: string}) => ({
+    const teacherOptions = teachers.map((teacher: { id: string, name: string, surname: string }) => ({
         value: teacher.id,
         label: `${teacher.name} ${teacher.surname}`
     }))
@@ -60,7 +60,7 @@ export default function SubjectForm({ type, data, setOpen, relatedData }: { type
                 <span className="text-xs text-gray-400 font-medium">Subject Information</span>
                 <div className="flex justify-between flex-wrap gap-4">
                     <InputFields type="text" label="Subject Name" placeholder="subject name" control={form.control} name="name" />
-                    {data && <InputFields type="text" label="Id" placeholder="subject id" control={form.control} name="id" hidden/>}
+                    {data && <InputFields type="text" label="Id" placeholder="subject id" control={form.control} name="id" hidden />}
                     <div className="flex flex-col gap-2 w-full md:w-1/2">
                         <FormField
                             control={form.control}
@@ -72,7 +72,7 @@ export default function SubjectForm({ type, data, setOpen, relatedData }: { type
                                         <Select
                                             isMulti
                                             options={teacherOptions}
-                                            value={teacherOptions.filter((option: {value: string, label: string}) => 
+                                            value={teacherOptions.filter((option: { value: string, label: string }) =>
                                                 field.value?.includes(option.value)
                                             )}
                                             onChange={(newValue) => {

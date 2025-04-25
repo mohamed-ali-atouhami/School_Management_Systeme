@@ -13,12 +13,12 @@ import {
 } from "@/components/ui/form"
 import { Select, SelectContent, SelectValue, SelectTrigger, SelectItem } from "@/components/ui/select"
 import InputFields from "../InputFields"
-import { resultSchema, ResultSchema} from "@/lib/FormValidationSchema"
-import { useTransition, useEffect , useActionState} from "react"
-import {createResult,updateResult } from "@/lib/Actions"
+import { resultSchema, ResultSchema } from "@/lib/FormValidationSchema"
+import { useTransition, useEffect, useActionState } from "react"
+import { createResult, updateResult } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-export default function ResultForm({ type, data, setOpen , relatedData}: { type: "create" | "edit", data?: ResultSchema, setOpen: (open: boolean) => void , relatedData?: { students: { id: string; name: string ; surname:string}[] , exams: {id : number; title : string}[] , assignments: {id : number; title : string}[] }}) {
+export default function ResultForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: ResultSchema, setOpen: (open: boolean) => void, relatedData?: { students: { id: string; name: string; surname: string }[], exams: { id: number; title: string }[], assignments: { id: number; title: string }[] } }) {
     const form = useForm<ResultSchema>({
         resolver: zodResolver(resultSchema),
         defaultValues: {
@@ -57,7 +57,7 @@ export default function ResultForm({ type, data, setOpen , relatedData}: { type:
 
                 <span className="text-xs text-gray-400 font-medium">Result Details</span>
                 <div className="flex justify-between flex-wrap gap-4">
-                    <InputFields type="text" label="Score" placeholder="score" control={form.control} name="score"  />
+                    <InputFields type="text" label="Score" placeholder="score" control={form.control} name="score" />
                 </div>
                 <div className="flex justify-between flex-wrap gap-4">
                     <FormField
@@ -73,7 +73,7 @@ export default function ResultForm({ type, data, setOpen , relatedData}: { type:
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {students?.map((student: {id:string, name:string, surname:string}) => (
+                                        {students?.map((student: { id: string, name: string, surname: string }) => (
                                             <SelectItem key={student.id} value={student.id}>
                                                 {student.name} {student.surname}
                                             </SelectItem>
@@ -97,7 +97,7 @@ export default function ResultForm({ type, data, setOpen , relatedData}: { type:
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {exams?.map((exm :{id: number, title: string}) => (
+                                        {exams?.map((exm: { id: number, title: string }) => (
                                             <SelectItem key={exm.id} value={exm.id.toString()}>
                                                 {exm.title}
                                             </SelectItem>
@@ -122,7 +122,7 @@ export default function ResultForm({ type, data, setOpen , relatedData}: { type:
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {assignments.map((asi : {id : number , title : string}) => (
+                                            {assignments.map((asi: { id: number, title: string }) => (
                                                 <SelectItem key={asi.id} value={asi.id.toString()}>
                                                     {asi.title}
                                                 </SelectItem>
@@ -135,7 +135,7 @@ export default function ResultForm({ type, data, setOpen , relatedData}: { type:
                         />
                     </div>
                 </div>
-                <Button type="submit" disabled={isPending}>{isPending ? type==="create" ? "Creating..." : "Updating..." : type === "create" ? "Create" : "Update"}</Button>
+                <Button type="submit" disabled={isPending}>{isPending ? type === "create" ? "Creating..." : "Updating..." : type === "create" ? "Create" : "Update"}</Button>
             </form>
         </Form>
     )

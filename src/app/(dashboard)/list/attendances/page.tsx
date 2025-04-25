@@ -65,7 +65,7 @@ const renderRow = (role?: string) => {
 };
 interface Props {
     searchParams: Promise<{ [key: string]: string | undefined }>
-  }
+}
 export default async function AttendancesListPage({ searchParams }: Props) {
     const resolvedParams = await searchParams;
     const { sessionClaims, userId } = await auth();
@@ -74,7 +74,7 @@ export default async function AttendancesListPage({ searchParams }: Props) {
 
     const { page, ...queryparams } = resolvedParams;
     const pageNumber = page ? Number(page) : 1;
-    
+
     // URL PARAMS CONDITIONS
     const query: Prisma.AttendanceWhereInput = {};
     if (queryparams) {

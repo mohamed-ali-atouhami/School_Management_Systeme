@@ -967,7 +967,7 @@ export async function createResult(currentState: CurrentState, formData: ResultS
         return { success: false, error: 'Either exam or assignment must be provided' }
     }
     if (formData.examId && formData.assignmentId) {
-        return { success: false, error:'Cannot link result to both exam and assignment' }
+        return { success: false, error: 'Cannot link result to both exam and assignment' }
     }
     if (Number(formData.score) < 0 || Number(formData.score) > 100) {
         return { success: false, error: 'Score must be between 0 and 100' }
@@ -1021,7 +1021,7 @@ export async function createResult(currentState: CurrentState, formData: ResultS
 export async function updateResult(currentState: CurrentState, formData: ResultSchema) {
     if (!formData || !formData.id || !formData.score || !formData.studentId || (!formData.examId && !formData.assignmentId)) {
         console.error('Invalid form data received:', formData)
-        return { success: false, error: 'Either exam or assignment must be provided'  }
+        return { success: false, error: 'Either exam or assignment must be provided' }
     }
     if (formData.examId && formData.assignmentId) {
         return { success: false, error: 'Cannot link result to both exam and assignment' }
@@ -1085,9 +1085,9 @@ export async function deleteResult(formData: FormData) {
         await prisma.result.delete({
             where: {
                 id: Number(id),
-                ...(role === "teacher" ? { 
+                ...(role === "teacher" ? {
                     OR: [
-                        { 
+                        {
                             exam: {
                                 lesson: { teacherId: currentUserId }
                             }
@@ -1345,7 +1345,7 @@ export async function getUserLoginStatistics() {
         const clerk = await clerkClient()
         const response = await clerk.users.getUserList()
         const users = response.data
-        
+
         // Get current month and previous months
         const currentDate = new Date()
         const months = Array.from({ length: 12 }, (_, i) => {
@@ -1366,7 +1366,7 @@ export async function getUserLoginStatistics() {
             // Count sign-ins
             if (lastSignIn) {
                 const signInDate = new Date(lastSignIn)
-                const monthIndex = months.findIndex(m => 
+                const monthIndex = months.findIndex(m =>
                     m.month === signInDate.toLocaleString('default', { month: 'short' }) &&
                     m.year === signInDate.getFullYear()
                 )
@@ -1378,7 +1378,7 @@ export async function getUserLoginStatistics() {
             // Count active sessions
             if (lastActive) {
                 const activeDate = new Date(lastActive)
-                const monthIndex = months.findIndex(m => 
+                const monthIndex = months.findIndex(m =>
                     m.month === activeDate.toLocaleString('default', { month: 'short' }) &&
                     m.year === activeDate.getFullYear()
                 )

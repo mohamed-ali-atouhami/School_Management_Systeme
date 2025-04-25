@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/form"
 import InputFields from "../InputFields"
 import { parentSchema, ParentSchema } from "@/lib/FormValidationSchema"
-import { useTransition, useEffect , useActionState} from "react"
+import { useTransition, useEffect, useActionState } from "react"
 import { createParent, updateParent } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"

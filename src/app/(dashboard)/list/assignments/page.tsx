@@ -52,10 +52,10 @@ const renderRow = (role?: string) => {
                 <td>
                     <div className="flex items-center gap-2">
                         {(role === "admin" || role === "teacher") &&
-                        <>
-                            <FormContainer table="assignments" type="edit" data={assignment} />
-                            <FormContainer table="assignments" type="delete" id={assignment.id} />
-                        </>
+                            <>
+                                <FormContainer table="assignments" type="edit" data={assignment} />
+                                <FormContainer table="assignments" type="delete" id={assignment.id} />
+                            </>
                         }
                     </div>
                 </td>
@@ -67,10 +67,10 @@ const renderRow = (role?: string) => {
 };
 interface Props {
     searchParams: Promise<{ [key: string]: string | undefined }>
-  }
+}
 export default async function AssignmentsListPage({ searchParams }: Props) {
     const resolvedParams = await searchParams;
-    const { sessionClaims ,userId} = await auth();
+    const { sessionClaims, userId } = await auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
     const currentUserId = userId!;
     const { page, ...queryparams } = resolvedParams;
@@ -129,9 +129,9 @@ export default async function AssignmentsListPage({ searchParams }: Props) {
             include: {
                 lesson: {
                     select: {
-                        subject: {select: {name: true}},
-                        class: {select: {name: true}},
-                        teacher: {select: {name: true ,surname: true}},
+                        subject: { select: { name: true } },
+                        class: { select: { name: true } },
+                        teacher: { select: { name: true, surname: true } },
                     },
                 },
             },
@@ -160,9 +160,9 @@ export default async function AssignmentsListPage({ searchParams }: Props) {
                             <Image src="/sort.png" alt="" width={14} height={14} />
                         </button>
                         {(role === "admin" || role === "teacher") &&
-                        <>
-                            <FormContainer table="assignments" type="create" />
-                        </>
+                            <>
+                                <FormContainer table="assignments" type="create" />
+                            </>
                         }
                     </div>
                 </div>

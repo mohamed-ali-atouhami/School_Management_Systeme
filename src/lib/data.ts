@@ -454,7 +454,6 @@
 //     supervisor: "Ophelia Marsh",
 //   },
 // ];
-
 // export const lessonsData = [
 //   {
 //     id: 1,

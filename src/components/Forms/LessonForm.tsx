@@ -20,7 +20,7 @@ import { useActionState, useEffect, useTransition } from "react"
 import { createLesson, updateLesson } from "@/lib/Actions"
 import { toast } from "sonner"
 
-export default function LessonForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: LessonSchema, setOpen: (open: boolean) => void, relatedData?: { subjects: { id: number, name: string }[], classes: { id: number, name: string }[], teachers: { id: string, name: string , surname: string}[] } }) {
+export default function LessonForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: LessonSchema, setOpen: (open: boolean) => void, relatedData?: { subjects: { id: number, name: string }[], classes: { id: number, name: string }[], teachers: { id: string, name: string, surname: string }[] } }) {
     const form = useForm<LessonSchema>({
         resolver: zodResolver(lessonSchema),
         defaultValues: {
@@ -201,7 +201,7 @@ export default function LessonForm({ type, data, setOpen, relatedData }: { type:
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {teachers.map((teacher: { id: string, name: string , surname: string}) => (
+                                            {teachers.map((teacher: { id: string, name: string, surname: string }) => (
                                                 <SelectItem key={teacher.id} value={teacher.id}>
                                                     {teacher.name} {teacher.surname}
                                                 </SelectItem>
@@ -214,7 +214,7 @@ export default function LessonForm({ type, data, setOpen, relatedData }: { type:
                         />
                     </div>
                 </div>
-                <Button type="submit" disabled={isPending}>{isPending ? type==="create" ? "Creating..." : "Updating..." : type === "create" ? "Create" : "Update"}</Button>
+                <Button type="submit" disabled={isPending}>{isPending ? type === "create" ? "Creating..." : "Updating..." : type === "create" ? "Create" : "Update"}</Button>
             </form>
         </Form>
     )

@@ -58,10 +58,10 @@ const renderRow = (role?: string) => {
 };
 interface Props {
     searchParams: Promise<{ [key: string]: string | undefined }>
-  }
+}
 export default async function AnnouncementsListPage({ searchParams }: Props) {
     const resolvedParams = await searchParams;
-    const { sessionClaims ,userId} = await auth();
+    const { sessionClaims, userId } = await auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
     const currentUserId = userId!;
 
@@ -116,10 +116,10 @@ export default async function AnnouncementsListPage({ searchParams }: Props) {
     }
     // Only apply role-based filtering for non-admin roles
     if (role !== "admin") {
-    query.OR = [
-        {
-            classId: null
-        },
+        query.OR = [
+            {
+                classId: null
+            },
             roleConditions[role as keyof typeof roleConditions]
         ]
     }

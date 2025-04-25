@@ -177,4 +177,3 @@ export const announcementSchema = z.object({
 });
 
 export type AnnouncementSchema = z.infer<typeof announcementSchema>;
-

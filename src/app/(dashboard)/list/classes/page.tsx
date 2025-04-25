@@ -65,7 +65,7 @@ const renderRow = (role?: string) => {
 };
 interface Props {
     searchParams: Promise<{ [key: string]: string | undefined }>
-  }
+}
 export default async function ClassesListPage({ searchParams }: Props) {
     const resolvedParams = await searchParams;
     const { sessionClaims } = await auth();

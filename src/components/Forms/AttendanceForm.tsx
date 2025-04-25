@@ -17,7 +17,7 @@ import { attendanceSchema, AttendanceSchema } from "@/lib/FormValidationSchema"
 import { createAttendance, updateAttendance } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { useEffect , useTransition , useActionState} from "react"
+import { useEffect, useTransition, useActionState } from "react"
 
 export default function AttendanceForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: AttendanceSchema, setOpen: (open: boolean) => void, relatedData?: { students: { id: number, name: string }[], lessons: { id: number, name: string }[] } }) {
     const form = useForm<AttendanceSchema>({
@@ -68,53 +68,53 @@ export default function AttendanceForm({ type, data, setOpen, relatedData }: { t
                 <span className="text-xs text-gray-400 font-medium">Attendance Details</span>
                 <div className="flex justify-between flex-wrap gap-4">
                     <FormField
-                            control={form.control}
-                            name="studentId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Student</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={data?.studentId?.toString()}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Students" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {students?.map((student: {id: number, name: string}) => (
-                                                <SelectItem key={student.id} value={student.id.toString()}>
-                                                    {student.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="lessonId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Lesson</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={data?.lessonId?.toString()}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Students" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {lessons?.map((lesson: {id: number, name: string}) => (
-                                                <SelectItem key={lesson.id} value={lesson.id.toString()}>
-                                                    {lesson.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        control={form.control}
+                        name="studentId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Student</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={data?.studentId?.toString()}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Students" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {students?.map((student: { id: number, name: string }) => (
+                                            <SelectItem key={student.id} value={student.id.toString()}>
+                                                {student.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="lessonId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Lesson</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={data?.lessonId?.toString()}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Students" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {lessons?.map((lesson: { id: number, name: string }) => (
+                                            <SelectItem key={lesson.id} value={lesson.id.toString()}>
+                                                {lesson.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </div>
                 <div className="flex justify-between flex-wrap gap-4">
                     <FormField
@@ -139,7 +139,7 @@ export default function AttendanceForm({ type, data, setOpen, relatedData }: { t
                                 <FormMessage />
                             </FormItem>
                         )}
-                    />  
+                    />
                     <FormField
                         control={form.control}
                         name="present"

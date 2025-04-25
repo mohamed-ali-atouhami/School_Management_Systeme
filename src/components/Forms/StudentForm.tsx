@@ -20,8 +20,8 @@ import { toast } from "sonner"
 import { useActionState, useEffect, useTransition } from "react"
 import { createStudent, updateStudent } from "@/lib/Actions"
 import { useRouter } from "next/navigation"
-    
-export default function StudentForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: StudentSchema, setOpen: (open: boolean) => void, relatedData?: { classes?: { id: number; name: string; capacity: number; _count: { students: number }}[], grades?: { id: number; level: string }[], parents?: { id: string; name: string; surname: string }[] } }) {
+
+export default function StudentForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: StudentSchema, setOpen: (open: boolean) => void, relatedData?: { classes?: { id: number; name: string; capacity: number; _count: { students: number } }[], grades?: { id: number; level: string }[], parents?: { id: string; name: string; surname: string }[] } }) {
     const form = useForm<StudentSchema>({
         resolver: zodResolver(studentSchema),
         defaultValues: {
@@ -165,7 +165,7 @@ export default function StudentForm({ type, data, setOpen, relatedData }: { type
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {classes.map((clss: { id: number; name: string; capacity: number; _count: { students: number }}, index: number) => (
+                                            {classes.map((clss: { id: number; name: string; capacity: number; _count: { students: number } }, index: number) => (
                                                 <SelectItem key={index} value={clss.id.toString()}>
                                                     {clss.name} - {clss._count.students}/{clss.capacity} Capacity
                                                 </SelectItem>

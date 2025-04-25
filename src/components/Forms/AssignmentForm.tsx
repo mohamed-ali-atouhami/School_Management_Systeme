@@ -18,7 +18,7 @@ import { assignmentSchema, AssignmentSchema } from "@/lib/FormValidationSchema"
 import { createAssignment, updateAssignment } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { useEffect,useActionState, useTransition } from "react"
+import { useEffect, useActionState, useTransition } from "react"
 
 export default function AssignmentForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: AssignmentSchema, setOpen: (open: boolean) => void, relatedData?: { lessons: { id: number, name: string }[] } }) {
     const form = useForm<AssignmentSchema>({
@@ -27,7 +27,7 @@ export default function AssignmentForm({ type, data, setOpen, relatedData }: { t
             id: data?.id || undefined,
             title: data?.title || "",
             startDate: data?.startDate,
-            dueDate: data?.dueDate ,
+            dueDate: data?.dueDate,
             lessonId: data?.lessonId || 0,
         },
     })
@@ -67,7 +67,7 @@ export default function AssignmentForm({ type, data, setOpen, relatedData }: { t
 
                 <span className="text-xs text-gray-400 font-medium">Assignment Details</span>
                 <div className="flex justify-between flex-wrap gap-4">
-                    <InputFields type="text" label="Title" placeholder="title" control={form.control} name="title"   />
+                    <InputFields type="text" label="Title" placeholder="title" control={form.control} name="title" />
                 </div>
                 <div className="flex justify-between flex-wrap gap-4">
                     <FormField
@@ -130,7 +130,7 @@ export default function AssignmentForm({ type, data, setOpen, relatedData }: { t
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {lessons?.map((lesson: {id: number, name: string}) => (
+                                            {lessons?.map((lesson: { id: number, name: string }) => (
                                                 <SelectItem key={lesson.id} value={lesson.id.toString()}>
                                                     {lesson.name}
                                                 </SelectItem>
@@ -142,7 +142,7 @@ export default function AssignmentForm({ type, data, setOpen, relatedData }: { t
                             )}
                         />
                     </div>
-                    
+
                 </div>
                 <Button type="submit" disabled={isPending}>{isPending ? type === "create" ? "Creating..." : "Updating..." : type === "create" ? "Create" : "Update"}</Button>
             </form>

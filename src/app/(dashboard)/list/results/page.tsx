@@ -235,4 +235,3 @@ export default async function ResultsListPage({ searchParams }: Props) {
         </div>
     )
 }
-

@@ -18,7 +18,7 @@ import { eventSchema, EventSchema } from "@/lib/FormValidationSchema"
 import { createEvent, updateEvent } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { useEffect , useTransition , useActionState} from "react"
+import { useEffect, useTransition, useActionState } from "react"
 
 export default function EventForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: EventSchema, setOpen: (open: boolean) => void, relatedData?: { classes: { id: number, name: string }[] } }) {
     const form = useForm<EventSchema>({
@@ -39,7 +39,7 @@ export default function EventForm({ type, data, setOpen, relatedData }: { type: 
         error: false
     })
     const router = useRouter()
-    
+
     useEffect(() => {
         if (state?.success === true) {
             toast.success(`Event ${type === "create" ? "created" : "updated"} successfully!`)
@@ -68,8 +68,8 @@ export default function EventForm({ type, data, setOpen, relatedData }: { type: 
 
                 <span className="text-xs text-gray-400 font-medium">Event Details</span>
                 <div className="flex justify-between flex-wrap gap-4">
-                    <InputFields type="text" label="Title" placeholder="title" control={form.control} name="title"   />
-                    <InputFields type="text" label="Description" placeholder="description" control={form.control} name="description"   />
+                    <InputFields type="text" label="Title" placeholder="title" control={form.control} name="title" />
+                    <InputFields type="text" label="Description" placeholder="description" control={form.control} name="description" />
                 </div>
                 <div className="flex justify-between flex-wrap gap-4">
                     <FormField
@@ -132,7 +132,7 @@ export default function EventForm({ type, data, setOpen, relatedData }: { type: 
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {classes?.map((clss: {id: number, name: string}) => (
+                                            {classes?.map((clss: { id: number, name: string }) => (
                                                 <SelectItem key={clss.id} value={clss.id.toString()}>
                                                     {clss.name}
                                                 </SelectItem>
@@ -144,7 +144,7 @@ export default function EventForm({ type, data, setOpen, relatedData }: { type: 
                             )}
                         />
                     </div>
-                    
+
                 </div>
                 <Button type="submit" disabled={isPending}>{isPending ? type === "create" ? "Creating..." : "Updating..." : type === "create" ? "Create" : "Update"}</Button>
             </form>

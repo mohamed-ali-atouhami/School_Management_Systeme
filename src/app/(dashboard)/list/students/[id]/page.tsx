@@ -17,20 +17,22 @@ interface Props {
 export default async function StudentSinglePage({ params }: Props) {
   const resolvedParams = await params;
   const { id } = resolvedParams;
-  const {sessionClaims} = await auth()
-  const role = (sessionClaims?.metadata as {role?: string})?.role
+  const { sessionClaims } = await auth()
+  const role = (sessionClaims?.metadata as { role?: string })?.role
   const student = await prisma.student.findUnique({
     where: {
       id: id
     },
     include: {
-      class: {include: {
-        _count: {
-          select: {
-            lessons: true
+      class: {
+        include: {
+          _count: {
+            select: {
+              lessons: true
+            }
           }
         }
-      }},
+      },
     }
   })
   if (!student) {
@@ -44,13 +46,13 @@ export default async function StudentSinglePage({ params }: Props) {
         <div className="flex flex-col gap-4 lg:flex-row ">
           {/* left (User Card Info) */}
           <div className="flex-1 flex gap-4 lg:w-2/3 bg-medaliSky rounded-md p-4">
-            
+
             <div className="w-1/3">
-              <Image 
-                src={student.image || "/noAvatar.png"} 
-                alt="user" 
-                width={144} 
-                height={144} 
+              <Image
+                src={student.image || "/noAvatar.png"}
+                alt="user"
+                width={144}
+                height={144}
                 className="w-36 h-36  rounded-full object-cover"
               />
             </div>
@@ -91,7 +93,7 @@ export default async function StudentSinglePage({ params }: Props) {
             {/* card 1 */}
             <div className="bg-white rounded-md p-4 flex gap-4 w-full md:w-[48%] lg:w-[45%] xl:w-[47%] ">
               <div className="flex items-center gap-2">
-                <Image src="/singleAttendance.png" alt="" width={24} height={24} className="w-6 h-6"/>
+                <Image src="/singleAttendance.png" alt="" width={24} height={24} className="w-6 h-6" />
                 <div>
                   <h1 className="text-xl font-semibold">{student.class.name.charAt(0)}th</h1>
                   <span className="text-sm text-gray-400">Grade</span>
@@ -101,7 +103,7 @@ export default async function StudentSinglePage({ params }: Props) {
             {/* card 2 */}
             <div className="bg-white rounded-md p-4 flex gap-4 w-full md:w-[48%] lg:w-[45%] xl:w-[47%] ">
               <div className="flex items-center gap-2">
-                <Image src="/singleBranch.png" alt="" width={24} height={24} className="w-6 h-6"/>
+                <Image src="/singleBranch.png" alt="" width={24} height={24} className="w-6 h-6" />
                 <Suspense fallback={"Loading..."}>
                   <StudentAttendanceCard id={student.id} />
                 </Suspense>
@@ -110,7 +112,7 @@ export default async function StudentSinglePage({ params }: Props) {
             {/* card 3 */}
             <div className="bg-white rounded-md p-4 flex gap-4 w-full md:w-[48%] lg:w-[45%] xl:w-[47%]">
               <div className="flex items-center gap-2">
-                <Image src="/singleLesson.png" alt="" width={24} height={24} className="w-6 h-6"/>
+                <Image src="/singleLesson.png" alt="" width={24} height={24} className="w-6 h-6" />
                 <div>
                   <h1 className="text-xl font-semibold">{student.class._count.lessons}</h1>
                   <span className="text-sm text-gray-400">Lessons</span>
@@ -120,7 +122,7 @@ export default async function StudentSinglePage({ params }: Props) {
             {/* card 4 */}
             <div className="bg-white rounded-md p-4 flex gap-4 w-full md:w-[48%] lg:w-[45%] xl:w-[47%]">
               <div className="flex items-center gap-2">
-                <Image src="/singleClass.png" alt="" width={24} height={24} className="w-6 h-6"/>
+                <Image src="/singleClass.png" alt="" width={24} height={24} className="w-6 h-6" />
                 <div>
                   <h1 className="text-xl font-semibold">{student.class.name}</h1>
                   <span className="text-sm text-gray-400">Class</span>
@@ -132,7 +134,7 @@ export default async function StudentSinglePage({ params }: Props) {
         {/* Bottom */}
         <div className="mt-4 bg-white rounded-md p-4 h-[800px]">
           <h1 className="text-lg font-semibold">Student&apos;s Schedule</h1>
-          <BigCalendarContainer type="classId" id={student.class.id}/>
+          <BigCalendarContainer type="classId" id={student.class.id} />
         </div>
       </div>
       {/* right */}
@@ -147,9 +149,9 @@ export default async function StudentSinglePage({ params }: Props) {
             <Link className="p-3 rounded-md bg-pink-50" href={`/list/results?studentId=${student.id}`}>Student&apos;s Results</Link>
           </div>
         </div>
-        <PerformanceChart/>
-        <Announcement/>
+        <PerformanceChart />
+        <Announcement />
       </div>
-    </div>  
+    </div>
   )
 }

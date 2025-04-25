@@ -12,7 +12,7 @@ export default async function ParentPage() {
     select: {
       name: true,
       surname: true,
-      class: {select: {id: true,name: true }}
+      class: { select: { id: true, name: true } }
     }
   })
   return (
