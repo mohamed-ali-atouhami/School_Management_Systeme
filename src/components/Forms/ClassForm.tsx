@@ -24,7 +24,7 @@ export default function ClassForm({ type, data, setOpen, relatedData }: { type: 
         resolver: zodResolver(classSchema),
         defaultValues: {
             id: data?.id || undefined,
-            className: data?.className || "",
+            name: data?.name || "",
             capacity: data?.capacity || 0,
             gradeId: data?.gradeId || 0,
             supervisorId: data?.supervisorId || undefined,
@@ -40,19 +40,12 @@ export default function ClassForm({ type, data, setOpen, relatedData }: { type: 
             setOpen(false)
             router.push("/list/classes")
         } else if (state?.error === true) {
-            toast.error(`Failed to ${type === "create" ? "create" : "update"} class!`)
+            toast.error(state?.error || `Failed to ${type === "create" ? "create" : "update"} class!`)
         }
     }, [state, type, form, router, setOpen])
     function onSubmit(values: ClassSchema) {
-        const payload = {
-            id: data?.id, // Include id for updates
-            className: values.className,
-            capacity: values.capacity,
-            gradeId: values.gradeId,
-            supervisorId: values.supervisorId
-        }
         startTransition(() => {
-            formAction(payload)
+            formAction(values)
         })
     }
     const teachers = relatedData?.teachers || []
@@ -63,7 +56,7 @@ export default function ClassForm({ type, data, setOpen, relatedData }: { type: 
 
                 <span className="text-xs text-gray-400 font-medium">Class Information</span>
                 <div className="flex justify-between flex-wrap gap-4">
-                    <InputFields type="text" label="Class Name" placeholder="class name" control={form.control} name="className" />
+                    <InputFields type="text" label="Class Name" placeholder="class name" control={form.control} name="name" />
                     <InputFields type="number" label="Capacity" placeholder="capacity" control={form.control} name="capacity" />
                     <div className="flex justify-between flex-wrap gap-4">
                     {data && <InputFields label="Id" control={form.control} name="id" hidden />}

@@ -15,12 +15,10 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectValue, SelectTrigger, SelectItem } from "@/components/ui/select"
 import InputFields from "../InputFields"
 import { examSchema, ExamSchema } from "@/lib/FormValidationSchema"
-import { useTransition } from "react"
-import { useActionState } from "react"
 import { createExam, updateExam } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useEffect , useTransition , useActionState} from "react"
 
 export default function ExamForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: ExamSchema, setOpen: (open: boolean) => void, relatedData?: { lessons: { id: number, name: string }[] } }) {
     const form = useForm<ExamSchema>({
@@ -40,7 +38,6 @@ export default function ExamForm({ type, data, setOpen, relatedData }: { type: "
         error: false
     })
     const router = useRouter()
-    const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
         if (state?.success === true) {
@@ -54,9 +51,6 @@ export default function ExamForm({ type, data, setOpen, relatedData }: { type: "
     }, [state, type, router, setOpen])
 
     async function onSubmit(values: ExamSchema) {
-        if (isSubmitting) return;
-
-        setIsSubmitting(true);
         try {
             startTransition(() => {
                 formAction(values);
@@ -64,8 +58,6 @@ export default function ExamForm({ type, data, setOpen, relatedData }: { type: "
         } catch (error) {
             console.error("Form submission error:", error);
             toast.error("An unexpected error occurred");
-        } finally {
-            setIsSubmitting(false);
         }
     }
     const lessons = relatedData?.lessons

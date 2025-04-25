@@ -14,12 +14,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectValue, SelectTrigger, SelectItem } from "@/components/ui/select"
 import { attendanceSchema, AttendanceSchema } from "@/lib/FormValidationSchema"
-import { useTransition } from "react"
-import { useActionState } from "react"
 import { createAttendance, updateAttendance } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useEffect , useTransition , useActionState} from "react"
 
 export default function AttendanceForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: AttendanceSchema, setOpen: (open: boolean) => void, relatedData?: { students: { id: number, name: string }[], lessons: { id: number, name: string }[] } }) {
     const form = useForm<AttendanceSchema>({
@@ -39,7 +37,6 @@ export default function AttendanceForm({ type, data, setOpen, relatedData }: { t
         error: false
     })
     const router = useRouter()
-    const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
         if (state?.success === true) {
@@ -53,9 +50,6 @@ export default function AttendanceForm({ type, data, setOpen, relatedData }: { t
     }, [state, type, router, setOpen])
 
     async function onSubmit(values: AttendanceSchema) {
-        if (isSubmitting) return;
-
-        setIsSubmitting(true);
         try {
             startTransition(() => {
                 formAction(values);
@@ -63,8 +57,6 @@ export default function AttendanceForm({ type, data, setOpen, relatedData }: { t
         } catch (error) {
             console.error("Form submission error:", error);
             toast.error("An unexpected error occurred");
-        } finally {
-            setIsSubmitting(false);
         }
     }
     const students = relatedData?.students

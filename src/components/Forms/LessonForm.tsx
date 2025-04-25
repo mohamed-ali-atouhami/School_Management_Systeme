@@ -45,7 +45,7 @@ export default function LessonForm({ type, data, setOpen, relatedData }: { type:
             setOpen(false)
             router.push("/list/lessons")
         } else if (state?.error === true) {
-            toast.error(`Failed to ${type === "create" ? "create" : "update"} lesson!`)
+            toast.error(state.error || `Failed to ${type === "create" ? "create" : "update"} lesson!`)
         }
     }, [state, type, form, router, setOpen])
     function onSubmit(values: LessonSchema) {

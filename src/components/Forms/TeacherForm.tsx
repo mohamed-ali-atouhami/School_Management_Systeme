@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectValue, SelectTrigger, SelectItem } from "@
 import InputFields from "../InputFields"
 import { teacherSchema, TeacherSchema } from "@/lib/FormValidationSchema"
 import { toast } from "sonner"
-import { useTransition, useActionState, useEffect, useState } from "react"
+import { useTransition, useActionState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createTeacher, updateTeacher } from "@/lib/Actions"
 import { UploadButton } from "@/lib/uploadthing"
@@ -61,7 +61,6 @@ export default function TeacherForm({
         error: false 
     })
     const router = useRouter()
-    const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
         if (state?.success === true) {
@@ -75,9 +74,6 @@ export default function TeacherForm({
     }, [state, type, router, setOpen])
 
     async function onSubmit(values: TeacherSchema) {
-        if (isSubmitting) return;
-        
-        setIsSubmitting(true);
         try {
             startTransition(() => {
                 formAction(values);
@@ -85,8 +81,6 @@ export default function TeacherForm({
         } catch (error) {
             console.error("Form submission error:", error);
             toast.error("An unexpected error occurred");
-        } finally {
-            setIsSubmitting(false);
         }
     }
 

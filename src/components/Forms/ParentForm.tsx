@@ -13,8 +13,7 @@ import {
 } from "@/components/ui/form"
 import InputFields from "../InputFields"
 import { parentSchema, ParentSchema } from "@/lib/FormValidationSchema"
-import { useTransition, useState, useEffect } from "react"
-import { useActionState } from "react"
+import { useTransition, useEffect , useActionState} from "react"
 import { createParent, updateParent } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -41,7 +40,6 @@ export default function ParentForm({ type, data, setOpen, relatedData }: { type:
         error: false
     })
     const router = useRouter()
-    const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
         if (state?.success === true) {
@@ -55,9 +53,6 @@ export default function ParentForm({ type, data, setOpen, relatedData }: { type:
     }, [state, type, router, setOpen])
 
     async function onSubmit(values: ParentSchema) {
-        if (isSubmitting) return;
-
-        setIsSubmitting(true);
         try {
             startTransition(() => {
                 formAction(values);
@@ -65,8 +60,6 @@ export default function ParentForm({ type, data, setOpen, relatedData }: { type:
         } catch (error) {
             console.error("Form submission error:", error);
             toast.error("An unexpected error occurred");
-        } finally {
-            setIsSubmitting(false);
         }
     }
     const students = relatedData?.students || []

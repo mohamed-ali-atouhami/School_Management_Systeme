@@ -14,8 +14,7 @@ import {
 import { Select, SelectContent, SelectValue, SelectTrigger, SelectItem } from "@/components/ui/select"
 import InputFields from "../InputFields"
 import { resultSchema, ResultSchema} from "@/lib/FormValidationSchema"
-import { useTransition, useEffect } from "react"
-import { useActionState } from "react"
+import { useTransition, useEffect , useActionState} from "react"
 import {createResult,updateResult } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -23,9 +22,9 @@ export default function ResultForm({ type, data, setOpen , relatedData}: { type:
     const form = useForm<ResultSchema>({
         resolver: zodResolver(resultSchema),
         defaultValues: {
-            id: data?.id || undefined,
+            id: data?.id,
             score: data?.score || "",
-            studentId: data?.studentId || undefined,
+            studentId: data?.studentId || "",
             examId: data?.examId || undefined,
             assignmentId: data?.assignmentId || undefined,
         },

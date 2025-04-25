@@ -13,18 +13,17 @@ import {
 import InputFields from "../InputFields"
 import { createSubject, updateSubject } from "@/lib/Actions"
 import { subjectSchema, SubjectSchema } from "@/lib/FormValidationSchema"
-import { useActionState } from "react"
+import { useActionState , useEffect , useTransition} from "react"
 import { toast } from "sonner"
-import { useTransition, useEffect } from 'react'
 import { useRouter } from "next/navigation"
 import Select from "react-select"
 
-export default function SubjectForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: SubjectSchema, setOpen: (open: boolean) => void, relatedData?: { teachers?: { id: string, name: string, surname: string }[] } }) {
+export default function SubjectForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: SubjectSchema , setOpen: (open: boolean) => void, relatedData?: { teachers?: { id: string, name: string, surname: string }[] } }) {
     const form = useForm<SubjectSchema>({
         resolver: zodResolver(subjectSchema),
         defaultValues: {
             id: data?.id || undefined,
-            subjectName: data?.subjectName || "",
+            name: data?.name || "",
             teachers: data?.teachers || [],
         },
     })
@@ -43,15 +42,8 @@ export default function SubjectForm({ type, data, setOpen, relatedData }: { type
     }, [state, type, form, router, setOpen])
 
     async function onSubmit(values: SubjectSchema) {
-        // Ensure we're sending an object with all required fields
-        const payload = {
-            id: data?.id, // Include id for updates
-            subjectName: values.subjectName,
-            teachers: values.teachers || [] // Ensure teachers is always an array
-        }
-        
         startTransition(() => {
-            formAction(payload)
+            formAction(values)
         })
     }
     const teachers = relatedData?.teachers || []
@@ -67,7 +59,7 @@ export default function SubjectForm({ type, data, setOpen, relatedData }: { type
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-8">
                 <span className="text-xs text-gray-400 font-medium">Subject Information</span>
                 <div className="flex justify-between flex-wrap gap-4">
-                    <InputFields type="text" label="Subject Name" placeholder="subject name" control={form.control} name="subjectName" />
+                    <InputFields type="text" label="Subject Name" placeholder="subject name" control={form.control} name="name" />
                     {data && <InputFields type="text" label="Id" placeholder="subject id" control={form.control} name="id" hidden/>}
                     <div className="flex flex-col gap-2 w-full md:w-1/2">
                         <FormField

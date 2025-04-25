@@ -15,12 +15,10 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectValue, SelectTrigger, SelectItem } from "@/components/ui/select"
 import InputFields from "../InputFields"
 import { announcementSchema, AnnouncementSchema } from "@/lib/FormValidationSchema"
-import { useTransition } from "react"
-import { useActionState } from "react"
+import { useActionState , useEffect , useTransition} from "react"
 import { createAnnouncement, updateAnnouncement } from "@/lib/Actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
 
 export default function AnnouncementForm({ type, data, setOpen, relatedData }: { type: "create" | "edit", data?: AnnouncementSchema, setOpen: (open: boolean) => void, relatedData?: { classes: { id: number, name: string }[] } }) {
     const form = useForm<AnnouncementSchema>({
@@ -40,7 +38,6 @@ export default function AnnouncementForm({ type, data, setOpen, relatedData }: {
         error: false
     })
     const router = useRouter()
-    const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
         if (state?.success === true) {
@@ -54,9 +51,6 @@ export default function AnnouncementForm({ type, data, setOpen, relatedData }: {
     }, [state, type, router, setOpen])
 
     async function onSubmit(values: AnnouncementSchema) {
-        if (isSubmitting) return;
-
-        setIsSubmitting(true);
         try {
             startTransition(() => {
                 formAction(values);
@@ -64,8 +58,6 @@ export default function AnnouncementForm({ type, data, setOpen, relatedData }: {
         } catch (error) {
             console.error("Form submission error:", error);
             toast.error("An unexpected error occurred");
-        } finally {
-            setIsSubmitting(false);
         }
     }
     const classes = relatedData?.classes

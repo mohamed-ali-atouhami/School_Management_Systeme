@@ -10,7 +10,7 @@ type CurrentState = {
 }
 // Subject Actions
 export async function createSubject(currentState: CurrentState, formData: SubjectSchema) {
-    if (!formData || !formData.subjectName) {
+    if (!formData || !formData.name) {
         console.error('Invalid form data received:', formData)
         return { success: false, error: true }
     }
@@ -18,7 +18,7 @@ export async function createSubject(currentState: CurrentState, formData: Subjec
     try {
         await prisma.subject.create({
             data: {
-                name: formData.subjectName,
+                name: formData.name,
                 teachers: {
                     connect: (formData.teachers || []).map((teacher) => ({ id: teacher }))
                 }
@@ -31,7 +31,7 @@ export async function createSubject(currentState: CurrentState, formData: Subjec
     }
 }
 export async function updateSubject(currentState: CurrentState, formData: SubjectSchema) {
-    if (!formData || !formData.id || !formData.subjectName) {
+    if (!formData || !formData.id || !formData.name) {
         console.error('Invalid form data received:', formData)
         return { success: false, error: true }
     }
@@ -40,7 +40,7 @@ export async function updateSubject(currentState: CurrentState, formData: Subjec
         await prisma.subject.update({
             where: { id: formData.id },
             data: {
-                name: formData.subjectName,
+                name: formData.name,
                 teachers: {
                     set: (formData.teachers || []).map((teacher) => ({ id: teacher }))
                 }
@@ -66,7 +66,7 @@ export async function deleteSubject(formData: FormData) {
 }
 // Class Actions
 export async function createClass(currentState: CurrentState, formData: ClassSchema) {
-    if (!formData || !formData.className) {
+    if (!formData || !formData.name) {
         console.error('Invalid form data received:', formData)
         return { success: false, error: true }
     }
@@ -74,7 +74,7 @@ export async function createClass(currentState: CurrentState, formData: ClassSch
     try {
         await prisma.class.create({
             data: {
-                name: formData.className,
+                name: formData.name,
                 capacity: formData.capacity,
                 gradeId: formData.gradeId,
                 supervisorId: formData.supervisorId
@@ -87,7 +87,7 @@ export async function createClass(currentState: CurrentState, formData: ClassSch
     }
 }
 export async function updateClass(currentState: CurrentState, formData: ClassSchema) {
-    if (!formData || !formData.id || !formData.className) {
+    if (!formData || !formData.id || !formData.name) {
         console.error('Invalid form data received:', formData)
         return { success: false, error: true }
     }
@@ -96,7 +96,7 @@ export async function updateClass(currentState: CurrentState, formData: ClassSch
         await prisma.class.update({
             where: { id: formData.id },
             data: {
-                name: formData.className,
+                name: formData.name,
                 capacity: formData.capacity,
                 gradeId: formData.gradeId,
                 supervisorId: formData.supervisorId
@@ -139,48 +139,34 @@ export async function createTeacher(currentState: CurrentState, formData: Teache
         return { success: false, error: 'Missing required fields' }
     }
 
+    let clerkUser: { id: string } | null = null;
+
     try {
-        const clerk = await clerkClient()
+        const clerk = await clerkClient();
 
-        // Create user in Clerk
-        let user;
-        try {
-            user = await clerk.users.createUser({
-                username: formData.username,
-                password: formData.password,
-                firstName: formData.name,
-                lastName: formData.surname,
-                skipPasswordChecks: true
-            })
-        } catch (clerkError) {
-            console.error('Clerk user creation failed:', clerkError)
-            await deleteImageFromUploadThing(formData.image, "Clerk creation failure")
-            return { success: false, error: 'Failed to create user authentication' }
+        // Step 1: Create user in Clerk
+        clerkUser = await clerk.users.createUser({
+            username: formData.username,
+            password: formData.password,
+            firstName: formData.name,
+            lastName: formData.surname,
+        });
+
+        if (!clerkUser?.id) {
+            console.error('Clerk user creation succeeded but returned no ID');
+            await deleteImageFromUploadThing(formData.image, "invalid Clerk response");
+            return { success: false, error: 'Invalid user creation response' };
         }
 
-        if (!user || !user.id) {
-            console.error('Clerk user creation succeeded but no user ID returned')
-            await deleteImageFromUploadThing(formData.image, "invalid Clerk response")
-            return { success: false, error: 'Invalid user creation response' }
-        }
-
-        // Update user metadata
         try {
-            await clerk.users.updateUser(user.id, {
+            // Step 2: Update metadata
+            await clerk.users.updateUser(clerkUser.id, {
                 publicMetadata: { role: "teacher" }
-            })
-        } catch (metadataError) {
-            console.error('Failed to update user metadata:', metadataError)
-            // Clean up the created user in Clerk
-            await clerk.users.deleteUser(user.id)
-            await deleteImageFromUploadThing(formData.image, "metadata update failure")
-            return { success: false, error: 'Failed to set user role' }
-        }
+            });
 
-        // Create teacher in database
-        try {
+            // Step 3: Create teacher in DB
             const teacherData = {
-                id: user.id,
+                id: clerkUser.id,
                 username: formData.username,
                 name: formData.name,
                 surname: formData.surname,
@@ -201,31 +187,38 @@ export async function createTeacher(currentState: CurrentState, formData: Teache
                         id: parseInt(classId)
                     })) || []
                 }
-            }
-
-            console.log('Creating teacher with data:', teacherData)
+            };
 
             const createdTeacher = await prisma.teacher.create({
                 data: teacherData
-            })
+            });
 
             if (!createdTeacher) {
-                throw new Error('Teacher creation returned null')
+                throw new Error('Teacher creation returned null');
             }
 
-        } catch (dbError) {
-            console.error('Database creation failed:', dbError)
-            // Clean up the created user in Clerk
-            await clerk.users.deleteUser(user.id)
-            await deleteImageFromUploadThing(formData.image, "database creation failure")
-            return { success: false, error: 'Failed to create teacher record' }
+            return { success: true, error: false };
+
+        } catch (internalError) {
+            // Rollback: delete Clerk user if anything fails after creation
+            console.error('Internal error after Clerk user creation:', internalError);
+            await clerk.users.deleteUser(clerkUser.id);
+            await deleteImageFromUploadThing(formData.image, "internal failure");
+            return { success: false, error: 'Failed during teacher creation process' };
         }
 
-        return { success: true, error: false }
     } catch (error) {
-        console.error('Unexpected error creating teacher:', error)
-        await deleteImageFromUploadThing(formData.image, "unexpected error")
-        return { success: false, error: 'An unexpected error occurred' }
+        console.error('Unexpected error creating teacher:', error);
+        if (clerkUser?.id) {
+            try {
+                const clerk = await clerkClient();
+                await clerk.users.deleteUser(clerkUser.id);
+            } catch (cleanupError) {
+                console.error('Failed to clean up Clerk user:', cleanupError);
+            }
+        }
+        await deleteImageFromUploadThing(formData.image, "unexpected error");
+        return { success: false, error: 'An unexpected error occurred' };
     }
 }
 export async function updateTeacher(currentState: CurrentState, formData: TeacherSchema) {
@@ -384,6 +377,8 @@ export async function createStudent(currentState: CurrentState, formData: Studen
         return { success: false, error: 'Missing required fields' }
     }
 
+    let clerkUser: { id: string } | null = null;
+
     try {
         const classItem = await prisma.class.findUnique({
             where: { id: formData.classId },
@@ -393,46 +388,31 @@ export async function createStudent(currentState: CurrentState, formData: Studen
             return { success: false, error: 'Class is full' }
         }
 
-        const clerk = await clerkClient()
+        const clerk = await clerkClient();
 
-        // Create user in Clerk
-        let user;
-        try {
-            user = await clerk.users.createUser({
-                username: formData.username,
-                password: formData.password,
-                firstName: formData.name,
-                lastName: formData.surname,
-                //skipPasswordChecks: true 
-            })
-        } catch (clerkError) {
-            console.error('Clerk user creation failed:', clerkError)
-            await deleteImageFromUploadThing(formData.image, "Clerk creation failure")
-            return { success: false, error: 'Failed to create user authentication' }
+        // Step 1: Create user in Clerk
+        clerkUser = await clerk.users.createUser({
+            username: formData.username,
+            password: formData.password,
+            firstName: formData.name,
+            lastName: formData.surname,
+        });
+
+        if (!clerkUser?.id) {
+            console.error('Clerk user creation succeeded but returned no ID');
+            await deleteImageFromUploadThing(formData.image, "invalid Clerk response");
+            return { success: false, error: 'Invalid user creation response' };
         }
 
-        if (!user || !user.id) {
-            console.error('Clerk user creation succeeded but no user ID returned')
-            await deleteImageFromUploadThing(formData.image, "invalid Clerk response")
-            return { success: false, error: 'Invalid user creation response' }
-        }
-
-        // Update user metadata
         try {
-            await clerk.users.updateUser(user.id, {
+            // Step 2: Update metadata
+            await clerk.users.updateUser(clerkUser.id, {
                 publicMetadata: { role: "student" }
-            })
-        } catch (metadataError) {
-            console.error('Failed to update user metadata:', metadataError)
-            // Clean up the created user in Clerk
-            await clerk.users.deleteUser(user.id)
-            await deleteImageFromUploadThing(formData.image, "metadata update failure")
-            return { success: false, error: 'Failed to set user role' }
-        }
-        // Create student in database
-        try {
+            });
+
+            // Step 3: Create student in DB
             const studentData = {
-                id: user.id,
+                id: clerkUser.id,
                 username: formData.username,
                 name: formData.name,
                 surname: formData.surname,
@@ -446,31 +426,38 @@ export async function createStudent(currentState: CurrentState, formData: Studen
                 parentId: formData.parentId,
                 classId: formData.classId,
                 gradeId: formData.gradeId
-            }
-
-            console.log('Creating student with data:', studentData)
+            };
 
             const createdStudent = await prisma.student.create({
                 data: studentData
-            })
+            });
 
             if (!createdStudent) {
-                throw new Error('Student creation returned null')
+                throw new Error('Student creation returned null');
             }
 
-        } catch (dbError) {
-            console.error('Database creation failed:', dbError)
-            // Clean up the created user in Clerk
-            await clerk.users.deleteUser(user.id)
-            await deleteImageFromUploadThing(formData.image, "database creation failure")
-            return { success: false, error: 'Failed to create student record' }
+            return { success: true, error: false };
+
+        } catch (internalError) {
+            // Rollback: delete Clerk user if anything fails after creation
+            console.error('Internal error after Clerk user creation:', internalError);
+            await clerk.users.deleteUser(clerkUser.id);
+            await deleteImageFromUploadThing(formData.image, "internal failure");
+            return { success: false, error: 'Failed during student creation process' };
         }
 
-        return { success: true, error: false }
     } catch (error) {
-        console.error('Unexpected error creating student:', error)
-        await deleteImageFromUploadThing(formData.image, "unexpected error")
-        return { success: false, error: 'An unexpected error occurred' }
+        console.error('Unexpected error creating student:', error);
+        if (clerkUser?.id) {
+            try {
+                const clerk = await clerkClient();
+                await clerk.users.deleteUser(clerkUser.id);
+            } catch (cleanupError) {
+                console.error('Failed to clean up Clerk user:', cleanupError);
+            }
+        }
+        await deleteImageFromUploadThing(formData.image, "unexpected error");
+        return { success: false, error: 'An unexpected error occurred' };
     }
 }
 export async function updateStudent(currentState: CurrentState, formData: StudentSchema) {
@@ -583,44 +570,34 @@ export async function createParent(currentState: CurrentState, formData: ParentS
         console.error('Invalid form data received:', formData)
         return { success: false, error: true }
     }
+
+    let clerkUser: { id: string } | null = null;
+
     try {
-        const clerk = await clerkClient()
+        const clerk = await clerkClient();
 
-        // Create user in Clerk
-        let user;
-        try {
-            user = await clerk.users.createUser({
-                username: formData.username,
-                password: formData.password,
-                firstName: formData.name,
-                lastName: formData.surname,
-                skipPasswordChecks: true
-            })
-        } catch (clerkError) {
-            console.error('Clerk user creation failed:', clerkError)
-            return { success: false, error: 'Failed to create user authentication' }
+        // Step 1: Create user in Clerk
+        clerkUser = await clerk.users.createUser({
+            username: formData.username,
+            password: formData.password,
+            firstName: formData.name,
+            lastName: formData.surname,
+        });
+
+        if (!clerkUser?.id) {
+            console.error('Clerk user creation succeeded but returned no ID');
+            return { success: false, error: 'Invalid user creation response' };
         }
 
-        if (!user || !user.id) {
-            console.error('Clerk user creation succeeded but no user ID returned')
-            return { success: false, error: 'Invalid user creation response' }
-        }
-
-        // Update user metadata
         try {
-            await clerk.users.updateUser(user.id, {
+            // Step 2: Update metadata
+            await clerk.users.updateUser(clerkUser.id, {
                 publicMetadata: { role: "parent" }
-            })
-        } catch (metadataError) {
-            console.error('Failed to update user metadata:', metadataError)
-            // Clean up the created user in Clerk
-            await clerk.users.deleteUser(user.id)
-            return { success: false, error: 'Failed to set user role' }
-        }
-        // Create parent in database
-        try {
+            });
+
+            // Step 3: Create parent in DB
             const parentData = {
-                id: user.id,
+                id: clerkUser.id,
                 username: formData.username,
                 name: formData.name,
                 surname: formData.surname,
@@ -630,27 +607,36 @@ export async function createParent(currentState: CurrentState, formData: ParentS
                 students: {
                     connect: formData.students?.map((studentId: string) => ({ id: studentId })) || []
                 }
-            }
-            console.log('Creating parent with data:', parentData)
+            };
 
             const createdParent = await prisma.parent.create({
                 data: parentData
-            })
+            });
+
             if (!createdParent) {
-                throw new Error('Parent creation returned null')
+                throw new Error('Parent creation returned null');
             }
 
-        } catch (dbError) {
-            console.error('Database creation failed:', dbError)
-            // Clean up the created user in Clerk
-            await clerk.users.deleteUser(user.id)
-            return { success: false, error: 'Failed to create parent record' }
+            return { success: true, error: false };
+
+        } catch (internalError) {
+            // Rollback: delete Clerk user if anything fails after creation
+            console.error('Internal error after Clerk user creation:', internalError);
+            await clerk.users.deleteUser(clerkUser.id);
+            return { success: false, error: 'Failed during parent creation process' };
         }
 
-        return { success: true, error: false }
     } catch (error) {
-        console.error('Unexpected error creating parent:', error)
-        return { success: false, error: 'An unexpected error occurred' }
+        console.error('Unexpected error creating parent:', error);
+        if (clerkUser?.id) {
+            try {
+                const clerk = await clerkClient();
+                await clerk.users.deleteUser(clerkUser.id);
+            } catch (cleanupError) {
+                console.error('Failed to clean up Clerk user:', cleanupError);
+            }
+        }
+        return { success: false, error: 'An unexpected error occurred' };
     }
 }
 export async function updateParent(currentState: CurrentState, formData: ParentSchema) {
@@ -1250,15 +1236,14 @@ export async function createAttendance(currentState: CurrentState, formData: Att
                     class: {
                         students: {
                             some: {
-                                id: formData.studentId,
-                                teacherId: currentUserId
+                                id: formData.studentId
                             }
                         }
                     }
                 }
             })
             if (!teacherLesson) {
-                return { success: false, error: 'You can only mark attendance for your students in your lessons' }
+                return { success: false, error: 'You can only mark attendance for students in your lessons' }
             }
         }
         await prisma.attendance.create({
@@ -1293,15 +1278,14 @@ export async function updateAttendance(currentState: CurrentState, formData: Att
                     class: {
                         students: {
                             some: {
-                                id: formData.studentId,
-                                teacherId: currentUserId
+                                id: formData.studentId
                             }
                         }
                     }
                 }
             })
             if (!teacherLesson) {
-                return { success: false, error: 'You can only update attendance for your students in your lessons' }
+                return { success: false, error: 'You can only update attendance for students in your lessons' }
             }
         }
         await prisma.attendance.update({
@@ -1335,7 +1319,7 @@ export async function deleteAttendance(formData: FormData) {
                         class: {
                             students: {
                                 some: {
-                                    teacherId: currentUserId
+                                    id: formData.get("studentId") as string
                                 }
                             }
                         }

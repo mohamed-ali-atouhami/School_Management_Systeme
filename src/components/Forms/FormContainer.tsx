@@ -196,7 +196,7 @@ export default async function FormContainer({ table, type, data, id, relatedData
             case "results" : 
                 const resultsStudents = await prisma.student.findMany({
                     where: {
-                        ...(role === "teacher" ? { teacherId: currentUserId } : {})
+                        ...(role === "teacher" ? { class: {lessons: {some: {teacherId: currentUserId}}}} : {})
                     },
                     select: {
                         id: true,
@@ -265,14 +265,7 @@ export default async function FormContainer({ table, type, data, id, relatedData
                 const attendanceLessons = await prisma.lesson.findMany({
                     where: {
                         ...(role === "teacher" ? { 
-                            teacherId: currentUserId,
-                            class: {
-                                students: {
-                                    some: {
-                                        teacherId: currentUserId
-                                    }
-                                }
-                            }
+                            teacherId: currentUserId
                         } : {})
                     },
                     select: {
@@ -288,7 +281,6 @@ export default async function FormContainer({ table, type, data, id, relatedData
                 const attendanceStudents = await prisma.student.findMany({
                     where: {
                         ...(role === "teacher" ? { 
-                            teacherId: currentUserId,
                             class: {
                                 lessons: {
                                     some: {

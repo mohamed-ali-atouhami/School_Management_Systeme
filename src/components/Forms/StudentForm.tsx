@@ -17,7 +17,7 @@ import Image from "next/image"
 import { studentSchema, StudentSchema } from "@/lib/FormValidationSchema"
 import { UploadButton } from "@/lib/uploadthing"
 import { toast } from "sonner"
-import { useActionState, useEffect, useState, useTransition } from "react"
+import { useActionState, useEffect, useTransition } from "react"
 import { createStudent, updateStudent } from "@/lib/Actions"
 import { useRouter } from "next/navigation"
     
@@ -48,7 +48,6 @@ export default function StudentForm({ type, data, setOpen, relatedData }: { type
         error: false
     })
     const router = useRouter()
-    const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
         if (state?.success === true) {
@@ -62,9 +61,6 @@ export default function StudentForm({ type, data, setOpen, relatedData }: { type
     }, [state, type, router, setOpen])
 
     async function onSubmit(values: StudentSchema) {
-        if (isSubmitting) return;
-
-        setIsSubmitting(true);
         try {
             startTransition(() => {
                 formAction(values);
@@ -72,8 +68,6 @@ export default function StudentForm({ type, data, setOpen, relatedData }: { type
         } catch (error) {
             console.error("Form submission error:", error);
             toast.error("An unexpected error occurred");
-        } finally {
-            setIsSubmitting(false);
         }
     }
     const classes = relatedData?.classes || []
