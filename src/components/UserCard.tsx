@@ -1,5 +1,7 @@
 import prisma from "@/lib/prisma";
 import Image from "next/image";
+import { clerkClient } from "@clerk/nextjs/server";
+import { User } from "@clerk/nextjs/server";
 
 type ModelCount = {
     admin: () => Promise<number>;
@@ -10,7 +12,12 @@ type ModelCount = {
 
 export default async function UserCard({ type }: { type: "admin" | "student" | "teacher" | "parent" }) {
   const modelMap: ModelCount = {
-    admin: () => prisma.admin.count(),
+    admin: async () => {
+      const clerk = await clerkClient();
+      const { data: users } = await clerk.users.getUserList();
+      return users.filter((user: User) => (user.publicMetadata as { role?: string })?.role === "admin").length;
+    },
+    //admin: () => prisma.admin.count(),
     student: () => prisma.student.count(),
     teacher: () => prisma.teacher.count(),
     parent: () => prisma.parent.count(),
