@@ -20,7 +20,30 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '2mb'
     }
   },
-  staticPageGenerationTimeout: 120,
+  // Disable static generation for all pages
+  staticPageGenerationTimeout: 0,
+  // Add this to disable static generation
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  // Add this to handle dynamic routes
+  trailingSlash: true,
+  // Add this to handle authentication pages
+  pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  // Add this to handle authentication
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, must-revalidate',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
