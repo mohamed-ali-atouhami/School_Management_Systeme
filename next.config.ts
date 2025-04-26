@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '2mb'
     }
   },
-  // Disable static generation for all pages
+  // Disable static generation completely
   staticPageGenerationTimeout: 0,
   // Add this to disable static generation
   typescript: {
@@ -43,6 +43,19 @@ const nextConfig: NextConfig = {
         ],
       },
     ];
+  },
+  // Add this to disable static generation for specific paths
+  async rewrites() {
+    return [
+      {
+        source: '/:path*',
+        destination: '/:path*',
+      },
+    ];
+  },
+  // Add this to handle dynamic routes
+  async redirects() {
+    return [];
   },
 };
 
