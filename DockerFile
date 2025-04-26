@@ -16,18 +16,8 @@ COPY . .
 # Generate Prisma Client
 RUN npx prisma generate
 
-# Set environment variables for build
-ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-ARG CLERK_SECRET_KEY
-ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-ENV CLERK_SECRET_KEY=$CLERK_SECRET_KEY
-ENV NODE_ENV=production
-
-# Create a build script
-RUN echo '#!/bin/sh\nnpm run build' > /app/build.sh && chmod +x /app/build.sh
-
 # Build the Next.js application
-RUN /app/build.sh
+RUN npm run build
 
 # Expose the port the app runs on
 EXPOSE 3000
