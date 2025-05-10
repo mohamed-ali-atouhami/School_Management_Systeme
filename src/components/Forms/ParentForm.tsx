@@ -118,32 +118,3 @@ export default function ParentForm({ type, data, setOpen, relatedData }: { type:
         </Form>
     )
 }
-{/* <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
-                        <FormField
-                            control={form.control}
-                            name="image"
-                            render={({ field: { onChange, ...field } }) => (
-                                <FormItem>
-                                    <FormLabel htmlFor="image" className="text-xs text-gray-400 flex items-center gap-2 cursor-pointer">
-                                        <Image src="/upload.png" alt="upload" width={28} height={28} />
-                                        <span>Upload Image</span>
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            id="image"
-                                            className="hidden"
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                if (file) {
-                                                    onChange(file);
-                                                }
-                                            }}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div> */}
