@@ -234,10 +234,7 @@ export default function StudentForm({ type, data, setOpen, relatedData }: { type
                         name="image"
                         render={({ field: { onChange, ...field } }) => (
                             <FormItem>
-                                <FormLabel htmlFor="image" className="text-xs text-gray-400 flex items-center gap-2 cursor-pointer">
-                                    <Image src="/upload.png" alt="upload" width={28} height={28} />
-                                    <span>Upload Image</span>
-                                </FormLabel>
+                                <FormLabel>Image</FormLabel>
                                 <FormControl>
                                     <div className="space-y-4">
                                         <UploadButton
